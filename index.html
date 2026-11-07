@@ -15,6 +15,7 @@ h1{margin:0 0 5px;font-size:25px}.muted{color:#9ca3af;font-size:13px}
 input,select,button{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
 button{border:0;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}.secondary{background:#e5e7eb;color:#111827}
+.btn-excel{background:#15803d;color:#fff}
 .transaction{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid #eee}.transaction:last-child{border-bottom:0}
 .tx-title{font-weight:bold}.tx-meta{font-size:12px;color:#6b7280;margin-top:4px}.delete{width:auto;padding:7px 10px;background:#fee2e2;color:#b91c1c}
 .empty{text-align:center;color:#6b7280;padding:25px 5px}
@@ -57,7 +58,8 @@ button{border:0;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}.s
         <option value="income">Pemasukan</option>
         <option value="expense">Pengeluaran</option>
       </select>
-      <button class="secondary" onclick="exportData()">Backup Data</button>
+      <button class="btn-excel" onclick="exportExcel()">⬇️ Download Excel</button>
+      <button class="secondary" onclick="exportData()">Backup JSON</button>
     </div>
   </div>
 
@@ -120,9 +122,44 @@ function render(){
     </div>`).join("");
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+// BACKUP JSON - yang lama, tetap dipertahankan
 function exportData(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-keuangan.json";a.click();
+}
+
+// BARU: EXPORT EXCEL - bisa dibuka di Excel / Google Sheets
+function exportExcel(){
+  if(!data.length){alert("Belum ada data untuk di-download.");return}
+
+  // Header Excel - pakai ; biar langsung rapi di Excel Indonesia
+  let csv = "Tanggal;Tipe;Kategori;Keterangan;Nominal\n";
+
+  // Urutkan dari yang terlama ke terbaru biar enak dibaca di Excel
+  [...data].reverse().forEach(x=>{
+    let tanggal = x.date || "";
+    let tipe = x.type === "income" ? "Pemasukan" : "Pengeluaran";
+    // Bersihkan ; dan enter biar tidak merusak kolom
+    let kategori = (x.category || "").replace(/;/g, ",").replace(/\n/g, " ");
+    let ket = (x.note || "-").replace(/;/g, ",").replace(/\n/g, " ");
+    let nominal = x.amount || 0;
+    csv += `${tanggal};${tipe};${kategori};${ket};${nominal}\n`;
+  });
+
+  // Total di bawah
+  let totalIn = data.filter(x=>x.type==="income").reduce((a,b)=>a+b.amount,0);
+  let totalOut = data.filter(x=>x.type==="expense").reduce((a,b)=>a+b.amount,0);
+  csv += `\n;;;Total Pemasukan;${totalIn}\n;;;Total Pengeluaran;${totalOut}\n;;;Saldo;${totalIn-totalOut}\n`;
+
+  // \ufeff biar huruf Indonesia tidak jadi kacau di Excel
+  let blob = new Blob(["\ufeff" + csv], {type: "text/csv;charset=utf-8;"});
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  let today = new Date().toISOString().slice(0,10);
+  a.download = "Catatan-Keuangan-" + today + ".csv";
+  a.click();
+  alert("Berhasil download Excel! Cek di folder Download HP Ayah.");
 }
 render();
 </script>

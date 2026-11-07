@@ -8,13 +8,13 @@
   *{box-sizing:border-box;font-family:system-ui,Arial}
   body{background:#111;color:#fff;margin:0;padding:16px}
   .card{background:#1e1e1e;border-radius:16px;padding:16px;margin-bottom:16px}
-  input,select{width:100%;background:#333;color:#fff;border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:10px;font-size:15px;outline:none}
+  input,select{width:100%;background:#333;color:#fff;border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:6px;font-size:16px;outline:none}
+  input:focus,select:focus{border-color:#ffb300}
   button{width:100%;border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px}
   .btn-simpan{background:#1a3eff;color:#fff}
   .btn-excel{background:#1e7e34;color:#fff}
   .btn-json{background:#555;color:#fff}
   .btn-kecil{width:auto;padding:6px 10px;font-size:12px;margin:0;background:#333;color:#fff}
-  .btn-kecil-hijau{width:auto;padding:6px 10px;font-size:12px;margin:0;background:#1e7e34;color:#fff}
   .in{color:#4caf50}.out{color:#ff5252}.sisa{color:#4da6ff}
   .item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333}
   .item small{color:#aaa}
@@ -27,51 +27,58 @@
   tr.aktif{background:#2a3a2a}
   .top3{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
   .top3 .card{margin:0}
-  .top3 small{color:#aaa}
-  .top3 b{font-size:22px}
+  .top3 small{color:#aaa}.top3 b{font-size:22px}
+  .preview{font-size:13px;color:#ffb300;margin:0 0 10px;min-height:18px}
+  .cepat{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .cepat button{width:auto;flex:1;padding:8px 4px;font-size:12px;background:#333;color:#fff;margin:0}
 </style>
 </head>
 <body>
 
-<!-- JUDUL -->
 <div class="card">
   <h2 style="margin:0">💰 Catatan Keuangan</h2>
   <p style="color:#aaa;margin:6px 0 0">Pencatatan pemasukan & pengeluaran sederhana</p>
 </div>
 
-<!-- PILIH BULAN - INI KUNCINYA, JANGAN DIGABUNG -->
 <div class="card">
   <label style="font-size:13px;color:#aaa">📅 Lihat Laporan Bulan:</label>
-  <select id="filterBulan" onchange="tampil()"></select>
+  <select id="filterBulan"></select>
   <div id="infoBulan" style="text-align:center;color:#ffb300;font-size:13px"></div>
 </div>
 
-<!-- RINGKASAN HANYA BULAN YANG DIPILIH -->
 <div class="top3">
   <div class="card"><small>Pemasukan <span id="labelMasuk"></span></small><br><b class="in" id="totalMasuk">Rp 0</b></div>
   <div class="card"><small>Pengeluaran <span id="labelKeluar"></span></small><br><b class="out" id="totalKeluar">Rp 0</b></div>
   <div class="card"><small>Saldo / Sisa Uang <span id="labelSisa"></span></small><br><b class="sisa" id="sisaUang">Rp 0</b></div>
 </div>
 
-<!-- TAMBAH TRANSAKSI -->
 <div class="card">
   <h3 style="margin:0 0 12px">Tambah Transaksi</h3>
   <select id="jenis"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
   <input type="date" id="tanggal" value="2026-11-07">
-  <input type="number" id="nominal" placeholder="Nominal (Rp)">
+  <!-- NOMINAL SUDAH FORMAT RUPIAH -->
+  <label style="font-size:13px;color:#aaa">Nominal (Rp) - ketik angka saja, titik otomatis:</label>
+  <input type="text" id="nominal" inputmode="numeric" placeholder="Contoh: 500.000" autocomplete="off">
+  <p class="preview" id="previewNominal">Ketik nominal, contoh: 500000 jadi Rp 500.000</p>
+  <div class="cepat">
+    <button type="button" onclick="tambahCepat(10000)">+10rb</button>
+    <button type="button" onclick="tambahCepat(50000)">+50rb</button>
+    <button type="button" onclick="tambahCepat(100000)">+100rb</button>
+    <button type="button" onclick="tambahCepat(500000)">+500rb</button>
+    <button type="button" onclick="tambahCepat(1000000)">+1jt</button>
+    <button type="button" onclick="hapusNominal()" style="background:#b71c1c">Hapus</button>
+  </div>
   <input type="text" id="kategori" placeholder="Kategori, contoh: Makan">
   <input type="text" id="keterangan" placeholder="Keterangan">
   <button class="btn-simpan" onclick="simpan()">+ Simpan Transaksi</button>
 </div>
 
-<!-- LAPORAN PER BULAN - TIDAK DIGABUNG -->
 <div class="card">
   <h3 style="margin:0 0 6px">📊 Laporan Per Bulan</h3>
-  <p style="color:#aaa;font-size:13px;margin:0 0 10px">Tiap bulan dipisah, jangan digabung. Klik bulan untuk lihat detailnya.</p>
+  <p style="color:#aaa;font-size:13px;margin:0 0 10px">Tiap bulan dipisah, jangan digabung.</p>
   <div id="laporanBulan"></div>
 </div>
 
-<!-- FILTER + RIWAYAT -->
 <div class="card">
   <input type="text" id="cari" placeholder="🔍 Cari transaksi..." oninput="tampil()">
   <select id="filterJenis" onchange="tampil()"><option value="Semua">Semua</option><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
@@ -87,8 +94,30 @@
 
 <script>
 let data = JSON.parse(localStorage.getItem('keuangan')||'[]');
-let bulanDipilih = '2026-11'; // default November 2026, biar tidak ke gabung semua
+let bulanDipilih = '2026-11';
 function rupiah(n){return 'Rp '+Number(n).toLocaleString('id-ID')}
+function angkaDariInput(str){ return Number(String(str||'').replace(/[^0-9]/g,'')) || 0; }
+function formatInput(){
+  let el=document.getElementById('nominal');
+  let angka=angkaDariInput(el.value);
+  if(!angka){ el.value=''; document.getElementById('previewNominal').textContent='Ketik nominal, contoh: 500000 jadi Rp 500.000'; return; }
+  el.value=angka.toLocaleString('id-ID'); // 500000 -> 500.000
+  document.getElementById('previewNominal').textContent='= '+rupiah(angka)+'  •  Terbilang: '+terbilang(angka)+' rupiah';
+}
+function tambahCepat(n){
+  let cur=angkaDariInput(document.getElementById('nominal').value);
+  document.getElementById('nominal').value=String(cur+n);
+  formatInput();
+}
+function hapusNominal(){ document.getElementById('nominal').value=''; formatInput(); }
+function terbilang(n){
+  // singkat saja biar Ayah gampang cek 0-nya
+  if(n>=1000000) return (n/1000000).toLocaleString('id-ID')+' juta';
+  if(n>=1000) return (n/1000).toLocaleString('id-ID')+' ribu';
+  return String(n);
+}
+document.getElementById('nominal').addEventListener('input', formatInput);
+
 function bulanKey(tgl){return tgl.slice(0,7)}
 function namaBulan(key){
   const [y,m]=key.split('-');
@@ -108,26 +137,24 @@ function isiFilterBulan(){
 function simpan(){
   const tanggal=document.getElementById('tanggal').value;
   const jenis=document.getElementById('jenis').value;
-  const nominal=Number(document.getElementById('nominal').value);
+  const nominal=angkaDariInput(document.getElementById('nominal').value);
   const kategori=document.getElementById('kategori').value||'-';
   const keterangan=document.getElementById('keterangan').value||'';
   if(!tanggal||!nominal) return alert('Isi tanggal & nominal dulu Ayah');
+  if(!confirm('Simpan '+jenis+' sebesar '+rupiah(nominal)+' ?')) return;
   data.unshift({tanggal,jenis,nominal,kategori,keterangan});
   localStorage.setItem('keuangan',JSON.stringify(data));
-  bulanDipilih=bulanKey(tanggal); // pindah otomatis ke bulan transaksi baru
-  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('keterangan').value='';
+  bulanDipilih=bulanKey(tanggal);
+  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('keterangan').value=''; formatInput();
   tampil();
 }
 function hapus(i){ if(confirm('Hapus transaksi ini?')){ data.splice(i,1); localStorage.setItem('keuangan',JSON.stringify(data)); tampil(); } }
 function pilihBulan(k){ bulanDipilih=k; tampil(); window.scrollTo({top:0,behavior:'smooth'}); }
-
 function tampil(){
   isiFilterBulan();
   const cari=document.getElementById('cari').value.toLowerCase();
   const fJenis=document.getElementById('filterJenis').value;
   const fBulan=bulanDipilih;
-
-  // 1. RINGKASAN HANYA BULAN DIPILIH - JANGAN DIGABUNG
   let dataBulan = data.filter(d=>bulanKey(d.tanggal)===fBulan);
   let masuk = dataBulan.filter(d=>d.jenis==='Pemasukan').reduce((s,d)=>s+d.nominal,0);
   let keluar = dataBulan.filter(d=>d.jenis==='Pengeluaran').reduce((s,d)=>s+d.nominal,0);
@@ -140,8 +167,6 @@ function tampil(){
   document.getElementById('labelSisa').textContent='- '+namaBulan(fBulan);
   document.getElementById('infoBulan').textContent=`Menampilkan ${namaBulan(fBulan)} • ${dataBulan.length} transaksi`;
   document.getElementById('judulRiwayat').textContent=namaBulan(fBulan);
-
-  // 2. LAPORAN PER BULAN - TIAP BULAN DIPISAH
   let keys=[...new Set(data.map(d=>bulanKey(d.tanggal)))].sort().reverse();
   let lap=document.getElementById('laporanBulan');
   if(!keys.length){ lap.innerHTML='<p style="color:#aaa;text-align:center">Belum ada data.</p>'; }
@@ -154,8 +179,6 @@ function tampil(){
       return `<tr class="${k===fBulan?'aktif':''}"><td><b>${namaBulan(k)}</b><br><small>${db.length} transaksi</small></td><td class="in">${rupiah(m)}</td><td class="out">${rupiah(ke)}</td><td class="sisa">${rupiah(m-ke)}</td><td><button class="btn-kecil" onclick="pilihBulan('${k}')">Lihat</button></td></tr>`;
     }).join('')+'</table>';
   }
-
-  // 3. RIWAYAT HANYA BULAN DIPILIH
   let filtered=data.map((d,i)=>({...d,idx:i})).filter(d=>{
     if(bulanKey(d.tanggal)!==fBulan) return false;
     if(fJenis!=='Semua' && d.jenis!==fJenis) return false;
@@ -171,7 +194,6 @@ function tampil(){
 function downloadExcelBulan(){
   let rows=[['Tanggal','Jenis','Kategori','Keterangan','Nominal']];
   data.filter(d=>bulanKey(d.tanggal)===bulanDipilih).forEach(d=>rows.push([d.tanggal,d.jenis,d.kategori,d.keterangan,d.nominal]));
-  // Tambah ringkasan di bawah
   let db=data.filter(d=>bulanKey(d.tanggal)===bulanDipilih);
   let m=db.filter(d=>d.jenis==='Pemasukan').reduce((s,d)=>s+d.nominal,0);
   let ke=db.filter(d=>d.jenis==='Pengeluaran').reduce((s,d)=>s+d.nominal,0);

@@ -6,44 +6,42 @@
 <title>Catatan Keuangan</title>
 <style>
   *{box-sizing:border-box;font-family:system-ui,Arial}
-  body{background:#111;color:#fff;margin:0;padding:16px}
-  .card{background:#1e1e1e;border-radius:16px;padding:16px;margin-bottom:16px}
-  input,select{width:100%;background:#333;color:#fff;border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:6px;font-size:16px;outline:none}
-  input:focus,select:focus{border-color:#ffb300}
+  body{background:#ffffff;color:#111;margin:0;padding:16px}
+  .card{background:#ffffff;border:1px solid #e5e5e5;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+  input,select{width:100%;background:#f2f2f2;color:#111;border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:10px;font-size:16px;outline:none}
+  input:focus,select:focus{border-color:#1a3eff;background:#fff}
   button{width:100%;border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px}
   .btn-simpan{background:#1a3eff;color:#fff}
   .btn-excel{background:#1e7e34;color:#fff}
-  .btn-json{background:#555;color:#fff}
-  .btn-kecil{width:auto;padding:6px 10px;font-size:12px;margin:0;background:#333;color:#fff}
-  .in{color:#4caf50}.out{color:#ff5252}.sisa{color:#4da6ff}
-  .item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333}
-  .item small{color:#aaa}
-  .badge{padding:3px 8px;border-radius:20px;font-size:12px}
-  .badge-in{background:#1e7e34}.badge-out{background:#b71c1c}
-  .hapus{background:#444;width:auto;padding:5px 10px;font-size:12px;margin:0}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{padding:10px 6px;border-bottom:1px solid #333;text-align:left}
-  th{color:#aaa;font-size:12px}
-  tr.aktif{background:#2a3a2a}
+  .btn-json{background:#eee;color:#111}
+  .btn-kecil{width:auto;padding:6px 10px;font-size:12px;margin:0;background:#eee;color:#111}
+  .in{color:#1e7e34}.out{color:#d32f2f}.sisa{color:#1565c0}
+  .item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+  .item small{color:#777}
+  .badge{padding:3px 8px;border-radius:20px;font-size:12px;color:#fff}
+  .badge-in{background:#1e7e34}.badge-out{background:#d32f2f}
+  .hapus{background:#eee;width:auto;padding:5px 10px;font-size:12px;margin:0;color:#111}
+  table{width:100%;border-collapse:collapse;font-size:13px;color:#111}
+  th,td{padding:10px 6px;border-bottom:1px solid #eee;text-align:left}
+  th{color:#777;font-size:12px}
+  tr.aktif{background:#eaf2ff}
   .top3{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
   .top3 .card{margin:0}
-  .top3 small{color:#aaa}.top3 b{font-size:22px}
-  .preview{font-size:13px;color:#ffb300;margin:0 0 10px;min-height:18px}
-  .cepat{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-  .cepat button{width:auto;flex:1;padding:8px 4px;font-size:12px;background:#333;color:#fff;margin:0}
+  .top3 small{color:#777}.top3 b{font-size:22px}
+  label{color:#555}
 </style>
 </head>
 <body>
 
 <div class="card">
   <h2 style="margin:0">💰 Catatan Keuangan</h2>
-  <p style="color:#aaa;margin:6px 0 0">Pencatatan pemasukan & pengeluaran sederhana</p>
+  <p style="color:#777;margin:6px 0 0">Pencatatan pemasukan & pengeluaran sederhana</p>
 </div>
 
 <div class="card">
-  <label style="font-size:13px;color:#aaa">📅 Lihat Laporan Bulan:</label>
+  <label style="font-size:13px">📅 Lihat Laporan Bulan:</label>
   <select id="filterBulan"></select>
-  <div id="infoBulan" style="text-align:center;color:#ffb300;font-size:13px"></div>
+  <div id="infoBulan" style="text-align:center;color:#d97706;font-size:13px"></div>
 </div>
 
 <div class="top3">
@@ -56,18 +54,9 @@
   <h3 style="margin:0 0 12px">Tambah Transaksi</h3>
   <select id="jenis"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
   <input type="date" id="tanggal" value="2026-11-07">
-  <!-- NOMINAL SUDAH FORMAT RUPIAH -->
-  <label style="font-size:13px;color:#aaa">Nominal (Rp) - ketik angka saja, titik otomatis:</label>
+  <!-- NOMINAL - TETAP AUTO TITIK, TAPI TANPA PREVIEW & TANPA TOMBOL CEPAT -->
+  <label style="font-size:13px">Nominal (Rp):</label>
   <input type="text" id="nominal" inputmode="numeric" placeholder="Contoh: 500.000" autocomplete="off">
-  <p class="preview" id="previewNominal">Ketik nominal, contoh: 500000 jadi Rp 500.000</p>
-  <div class="cepat">
-    <button type="button" onclick="tambahCepat(10000)">+10rb</button>
-    <button type="button" onclick="tambahCepat(50000)">+50rb</button>
-    <button type="button" onclick="tambahCepat(100000)">+100rb</button>
-    <button type="button" onclick="tambahCepat(500000)">+500rb</button>
-    <button type="button" onclick="tambahCepat(1000000)">+1jt</button>
-    <button type="button" onclick="hapusNominal()" style="background:#b71c1c">Hapus</button>
-  </div>
   <input type="text" id="kategori" placeholder="Kategori, contoh: Makan">
   <input type="text" id="keterangan" placeholder="Keterangan">
   <button class="btn-simpan" onclick="simpan()">+ Simpan Transaksi</button>
@@ -75,7 +64,7 @@
 
 <div class="card">
   <h3 style="margin:0 0 6px">📊 Laporan Per Bulan</h3>
-  <p style="color:#aaa;font-size:13px;margin:0 0 10px">Tiap bulan dipisah, jangan digabung.</p>
+  <p style="color:#777;font-size:13px;margin:0 0 10px">Tiap bulan dipisah, jangan digabung.</p>
   <div id="laporanBulan"></div>
 </div>
 
@@ -83,13 +72,13 @@
   <input type="text" id="cari" placeholder="🔍 Cari transaksi..." oninput="tampil()">
   <select id="filterJenis" onchange="tampil()"><option value="Semua">Semua</option><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
   <button class="btn-excel" onclick="downloadExcelBulan()">⬇️ Download Excel Bulan Ini</button>
-  <button class="btn-excel" style="background:#333" onclick="downloadExcelSemua()">⬇️ Download Excel Semua Bulan</button>
+  <button class="btn-excel" style="background:#eee;color:#111" onclick="downloadExcelSemua()">⬇️ Download Excel Semua Bulan</button>
   <button class="btn-json" onclick="backupJSON()">Backup JSON</button>
 </div>
 
 <div class="card">
   <h3>Riwayat Transaksi - <span id="judulRiwayat"></span></h3>
-  <div id="list"><p style="text-align:center;color:#aaa">Belum ada transaksi.</p></div>
+  <div id="list"><p style="text-align:center;color:#888">Belum ada transaksi.</p></div>
 </div>
 
 <script>
@@ -100,21 +89,8 @@ function angkaDariInput(str){ return Number(String(str||'').replace(/[^0-9]/g,''
 function formatInput(){
   let el=document.getElementById('nominal');
   let angka=angkaDariInput(el.value);
-  if(!angka){ el.value=''; document.getElementById('previewNominal').textContent='Ketik nominal, contoh: 500000 jadi Rp 500.000'; return; }
-  el.value=angka.toLocaleString('id-ID'); // 500000 -> 500.000
-  document.getElementById('previewNominal').textContent='= '+rupiah(angka)+'  •  Terbilang: '+terbilang(angka)+' rupiah';
-}
-function tambahCepat(n){
-  let cur=angkaDariInput(document.getElementById('nominal').value);
-  document.getElementById('nominal').value=String(cur+n);
-  formatInput();
-}
-function hapusNominal(){ document.getElementById('nominal').value=''; formatInput(); }
-function terbilang(n){
-  // singkat saja biar Ayah gampang cek 0-nya
-  if(n>=1000000) return (n/1000000).toLocaleString('id-ID')+' juta';
-  if(n>=1000) return (n/1000).toLocaleString('id-ID')+' ribu';
-  return String(n);
+  if(!angka){ el.value=''; return; }
+  el.value=angka.toLocaleString('id-ID'); // 500000 -> 500.000, tetap auto titik
 }
 document.getElementById('nominal').addEventListener('input', formatInput);
 
@@ -145,7 +121,7 @@ function simpan(){
   data.unshift({tanggal,jenis,nominal,kategori,keterangan});
   localStorage.setItem('keuangan',JSON.stringify(data));
   bulanDipilih=bulanKey(tanggal);
-  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('keterangan').value=''; formatInput();
+  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('keterangan').value='';
   tampil();
 }
 function hapus(i){ if(confirm('Hapus transaksi ini?')){ data.splice(i,1); localStorage.setItem('keuangan',JSON.stringify(data)); tampil(); } }
@@ -169,7 +145,7 @@ function tampil(){
   document.getElementById('judulRiwayat').textContent=namaBulan(fBulan);
   let keys=[...new Set(data.map(d=>bulanKey(d.tanggal)))].sort().reverse();
   let lap=document.getElementById('laporanBulan');
-  if(!keys.length){ lap.innerHTML='<p style="color:#aaa;text-align:center">Belum ada data.</p>'; }
+  if(!keys.length){ lap.innerHTML='<p style="color:#888;text-align:center">Belum ada data.</p>'; }
   else{
     lap.innerHTML='<table><tr><th>Bulan</th><th>Pemasukan</th><th>Pengeluaran</th><th>Sisa</th><th></th></tr>'+
     keys.map(k=>{
@@ -186,7 +162,7 @@ function tampil(){
     return true;
   });
   let list=document.getElementById('list');
-  if(!filtered.length){ list.innerHTML='<p style="text-align:center;color:#aaa">Belum ada transaksi di '+namaBulan(fBulan)+'.</p>'; return; }
+  if(!filtered.length){ list.innerHTML='<p style="text-align:center;color:#888">Belum ada transaksi di '+namaBulan(fBulan)+'.</p>'; return; }
   list.innerHTML=filtered.map(d=>`
     <div class="item"><div><b>${d.kategori}</b><br><small>${d.tanggal} • ${d.keterangan}</small></div>
     <div style="text-align:right"><span class="badge ${d.jenis==='Pemasukan'?'badge-in':'badge-out'}">${d.jenis}</span><br><b class="${d.jenis==='Pemasukan'?'in':'out'}">${d.jenis==='Pemasukan'?'+':'-'}${rupiah(d.nominal)}</b><br><button class="hapus" onclick="hapus(${d.idx})">Hapus</button></div></div>`).join('');

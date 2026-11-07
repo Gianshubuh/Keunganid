@@ -1,167 +1,149 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Catatan Keuangan</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#1f2937}
-.container{max-width:760px;margin:auto;padding:18px}.header{background:#111827;color:#fff;border-radius:18px;padding:20px;margin-bottom:16px}
-h1{margin:0 0 5px;font-size:25px}.muted{color:#9ca3af;font-size:13px}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.card{background:white;border-radius:14px;padding:14px;box-shadow:0 2px 8px #0000000d}
-.card small{display:block;color:#6b7280}.card b{display:block;margin-top:7px;font-size:16px}
-.income{color:#15803d}.expense{color:#dc2626}.balance{color:#2563eb}
-.panel{background:white;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #0000000d}
-input,select,button{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
-button{border:0;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}.secondary{background:#e5e7eb;color:#111827}
-.btn-excel{background:#15803d;color:#fff}
-.transaction{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid #eee}.transaction:last-child{border-bottom:0}
-.tx-title{font-weight:bold}.tx-meta{font-size:12px;color:#6b7280;margin-top:4px}.delete{width:auto;padding:7px 10px;background:#fee2e2;color:#b91c1c}
-.empty{text-align:center;color:#6b7280;padding:25px 5px}
-@media(max-width:560px){.cards{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+  *{box-sizing:border-box;font-family:system-ui,Arial}
+  body{background:#111;color:#fff;margin:0;padding:16px}
+  .card{background:#1e1e1e;border-radius:16px;padding:16px;margin-bottom:16px}
+  input,select{width:100%;background:#333;color:#fff;border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:10px;font-size:15px;outline:none}
+  input:focus,select:focus{border-color:#ffb300}
+  button{width:100%;border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px}
+  .btn-simpan{background:#1a3eff;color:#fff}
+  .btn-excel{background:#1e7e34;color:#fff}
+  .btn-json{background:#555;color:#fff}
+  .jenis{display:flex;gap:10px;margin-bottom:10px}
+  .jenis label{flex:1;text-align:center;padding:12px;border-radius:10px;background:#333;cursor:pointer;border:2px solid transparent}
+  .jenis input{display:none}
+  .jenis input:checked + span{font-weight:800}
+  #jenisMasuk:checked ~ .wrap label[for="jenisMasuk"], label:has(#jenisMasuk:checked){background:#1e7e34;border-color:#fff}
+  #jenisKeluar:checked ~ .wrap label[for="jenisKeluar"], label:has(#jenisKeluar:checked){background:#b71c1c;border-color:#fff}
+  .summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+  .sum{background:#2a2a2a;border-radius:12px;padding:12px;text-align:center}
+  .sum small{color:#aaa;display:block}
+  .sum b{font-size:15px}
+  .in{color:#4caf50}.out{color:#ff5252}.sisa{color:#ffb300}
+  .item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333}
+  .item small{color:#aaa}
+  .badge{padding:3px 8px;border-radius:20px;font-size:12px}
+  .badge-in{background:#1e7e34}.badge-out{background:#b71c1c}
+  .hapus{background:#444;width:auto;padding:5px 10px;font-size:12px;margin:0}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>💰 Catatan Keuangan</h1>
-    <div class="muted">Pencatatan pemasukan & pengeluaran sederhana</div>
-  </div>
 
-  <div class="cards">
-    <div class="card"><small>Pemasukan</small><b class="income" id="income">Rp0</b></div>
-    <div class="card"><small>Pengeluaran</small><b class="expense" id="expense">Rp0</b></div>
-    <div class="card"><small>Saldo</small><b class="balance" id="balance">Rp0</b></div>
+<div class="card">
+  <h3 style="margin:0 0 12px">Tambah Transaksi</h3>
+  <input type="date" id="tanggal" value="2026-11-07">
+  <div class="jenis">
+    <label><input type="radio" name="jenis" id="jenisMasuk" value="Pemasukan"> 💰 Pemasukan</label>
+    <label><input type="radio" name="jenis" id="jenisKeluar" value="Pengeluaran" checked> 💸 Pengeluaran</label>
   </div>
+  <input type="number" id="nominal" placeholder="Nominal (Rp)">
+  <input type="text" id="kategori" placeholder="Kategori, contoh: Makan">
+  <input type="text" id="keterangan" placeholder="Keterangan">
+  <button class="btn-simpan" onclick="simpan()">+ Simpan Transaksi</button>
+</div>
 
-  <div class="panel">
-    <h3>Tambah Transaksi</h3>
-    <div class="grid">
-      <select id="type">
-        <option value="income">Pemasukan</option>
-        <option value="expense">Pengeluaran</option>
-      </select>
-      <input id="date" type="date">
-      <input id="amount" type="number" min="0" placeholder="Nominal (Rp)">
-      <input id="category" placeholder="Kategori, contoh: Makan">
-      <input id="note" class="full" placeholder="Keterangan">
-      <button class="full" onclick="addTransaction()">+ Simpan Transaksi</button>
-    </div>
-  </div>
+<div class="card">
+  <input type="text" id="cari" placeholder="🔍 Cari transaksi..." oninput="tampil()">
+  <!-- FILTER BULAN BARU -->
+  <label style="font-size:13px;color:#aaa">Pilih Bulan:</label>
+  <select id="filterBulan" onchange="tampil()"><option value="semua">Semua Bulan</option></select>
+  <select id="filterJenis" onchange="tampil()"><option value="Semua">Semua</option><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
 
-  <div class="panel">
-    <div class="grid">
-      <input id="search" class="full" placeholder="🔎 Cari transaksi..." oninput="render()">
-      <select id="filter" onchange="render()">
-        <option value="all">Semua</option>
-        <option value="income">Pemasukan</option>
-        <option value="expense">Pengeluaran</option>
-      </select>
-      <button class="btn-excel" onclick="exportExcel()">⬇️ Download Excel</button>
-      <button class="secondary" onclick="exportData()">Backup JSON</button>
-    </div>
+  <!-- RINGKASAN BULANAN BARU -->
+  <div class="summary">
+    <div class="sum"><small>Pemasukan</small><b class="in" id="totalMasuk">Rp 0</b></div>
+    <div class="sum"><small>Pengeluaran</small><b class="out" id="totalKeluar">Rp 0</b></div>
+    <div class="sum"><small>Sisa Uang</small><b class="sisa" id="sisaUang">Rp 0</b></div>
   </div>
+  <div id="infoBulan" style="text-align:center;color:#aaa;font-size:13px;margin-bottom:10px"></div>
 
-  <div class="panel">
-    <h3>Riwayat Transaksi</h3>
-    <div id="list"></div>
-  </div>
+  <button class="btn-excel" onclick="downloadExcel()">⬇️ Download Excel</button>
+  <button class="btn-json" onclick="backupJSON()">Backup JSON</button>
+</div>
+
+<div class="card">
+  <h3>Riwayat Transaksi</h3>
+  <div id="list"><p style="text-align:center;color:#aaa">Belum ada transaksi.</p></div>
 </div>
 
 <script>
-const KEY="catatan-keuangan-v1";
-let data=JSON.parse(localStorage.getItem(KEY)||"[]");
-document.getElementById("date").value=new Date().toISOString().slice(0,10);
-
-function rupiah(n){return "Rp"+Number(n).toLocaleString("id-ID")}
-function save(){localStorage.setItem(KEY,JSON.stringify(data))}
-function addTransaction(){
-  const type=document.getElementById("type").value;
-  const amount=Number(document.getElementById("amount").value);
-  const category=document.getElementById("category").value.trim()||"Lainnya";
-  const note=document.getElementById("note").value.trim();
-  const date=document.getElementById("date").value;
-  if(!amount||amount<1||!date){alert("Isi tanggal dan nominal terlebih dahulu.");return}
-  data.unshift({id:Date.now(),type,amount,category,note,date});
-  save();
-  document.getElementById("amount").value="";
-  document.getElementById("note").value="";
-  render();
+let data = JSON.parse(localStorage.getItem('keuangan')||'[]');
+function rupiah(n){return 'Rp '+Number(n).toLocaleString('id-ID')}
+function bulanKey(tgl){return tgl.slice(0,7)} // YYYY-MM
+function namaBulan(key){
+  if(key==='semua') return 'Semua Bulan';
+  const [y,m]=key.split('-');
+  const nama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return nama[Number(m)-1]+' '+y;
 }
-function removeTx(id){
-  if(confirm("Hapus transaksi ini?")){
-    data=data.filter(x=>x.id!==id);save();render();
-  }
+function isiFilterBulan(){
+  const sel=document.getElementById('filterBulan');
+  const cur=sel.value;
+  const keys=[...new Set(data.map(d=>bulanKey(d.tanggal)))].sort().reverse();
+  sel.innerHTML='<option value="semua">Semua Bulan</option>';
+  keys.forEach(k=>{let o=document.createElement('option');o.value=k;o.textContent=namaBulan(k);sel.appendChild(o)});
+  if(keys.includes(cur)) sel.value=cur;
+  else if(keys.length) sel.value=keys[0];
 }
-function render(){
-  let income=0,expense=0;
-  data.forEach(x=>x.type==="income"?income+=x.amount:expense+=x.amount);
-  document.getElementById("income").textContent=rupiah(income);
-  document.getElementById("expense").textContent=rupiah(expense);
-  document.getElementById("balance").textContent=rupiah(income-expense);
-
-  const q=document.getElementById("search").value.toLowerCase();
-  const f=document.getElementById("filter").value;
-  const filtered=data.filter(x=>
-    (f==="all"||x.type===f) &&
-    (x.category.toLowerCase().includes(q)||x.note.toLowerCase().includes(q))
-  );
-  const list=document.getElementById("list");
-  if(!filtered.length){list.innerHTML='<div class="empty">Belum ada transaksi.</div>';return}
-  list.innerHTML=filtered.map(x=>`
-    <div class="transaction">
-      <div>
-        <div class="tx-title">${escapeHtml(x.category)}</div>
-        <div class="tx-meta">${x.date} • ${escapeHtml(x.note||"-")}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="${x.type==="income"?"income":"expense"}">${x.type==="income"?"+":"-"} ${rupiah(x.amount)}</div>
-        <button class="delete" onclick="removeTx(${x.id})">Hapus</button>
-      </div>
-    </div>`).join("");
+function simpan(){
+  const tanggal=document.getElementById('tanggal').value;
+  const jenis=document.querySelector('input[name="jenis"]:checked').value;
+  const nominal=Number(document.getElementById('nominal').value);
+  const kategori=document.getElementById('kategori').value||'-';
+  const keterangan=document.getElementById('keterangan').value||'';
+  if(!tanggal||!nominal) return alert('Isi tanggal & nominal dulu Ayah');
+  data.unshift({tanggal,jenis,nominal,kategori,keterangan});
+  localStorage.setItem('keuangan',JSON.stringify(data));
+  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('keterangan').value='';
+  tampil();
 }
-function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-
-// BACKUP JSON - yang lama, tetap dipertahankan
-function exportData(){
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-keuangan.json";a.click();
-}
-
-// BARU: EXPORT EXCEL - bisa dibuka di Excel / Google Sheets
-function exportExcel(){
-  if(!data.length){alert("Belum ada data untuk di-download.");return}
-
-  // Header Excel - pakai ; biar langsung rapi di Excel Indonesia
-  let csv = "Tanggal;Tipe;Kategori;Keterangan;Nominal\n";
-
-  // Urutkan dari yang terlama ke terbaru biar enak dibaca di Excel
-  [...data].reverse().forEach(x=>{
-    let tanggal = x.date || "";
-    let tipe = x.type === "income" ? "Pemasukan" : "Pengeluaran";
-    // Bersihkan ; dan enter biar tidak merusak kolom
-    let kategori = (x.category || "").replace(/;/g, ",").replace(/\n/g, " ");
-    let ket = (x.note || "-").replace(/;/g, ",").replace(/\n/g, " ");
-    let nominal = x.amount || 0;
-    csv += `${tanggal};${tipe};${kategori};${ket};${nominal}\n`;
+function hapus(i){ if(confirm('Hapus transaksi ini?')){ data.splice(i,1); localStorage.setItem('keuangan',JSON.stringify(data)); tampil(); } }
+function tampil(){
+  isiFilterBulan();
+  const cari=document.getElementById('cari').value.toLowerCase();
+  const fBulan=document.getElementById('filterBulan').value;
+  const fJenis=document.getElementById('filterJenis').value;
+  // Filter untuk list
+  let filtered=data.map((d,i)=>({...d,idx:i})).filter(d=>{
+    if(fBulan!=='semua' && bulanKey(d.tanggal)!==fBulan) return false;
+    if(fJenis!=='Semua' && d.jenis!==fJenis) return false;
+    if(cari && !(d.kategori+d.keterangan+d.jenis).toLowerCase().includes(cari)) return false;
+    return true;
   });
+  // Hitungan bulanan - HANYA berdasarkan bulan yang dipilih (tidak ikut filter jenis/cari)
+  let dataBulan = data.filter(d=> fBulan==='semua' || bulanKey(d.tanggal)===fBulan);
+  let masuk = dataBulan.filter(d=>d.jenis==='Pemasukan').reduce((s,d)=>s+d.nominal,0);
+  let keluar = dataBulan.filter(d=>d.jenis==='Pengeluaran').reduce((s,d)=>s+d.nominal,0);
+  let sisa = masuk - keluar;
+  document.getElementById('totalMasuk').textContent=rupiah(masuk);
+  document.getElementById('totalKeluar').textContent=rupiah(keluar);
+  document.getElementById('sisaUang').textContent=rupiah(sisa);
+  document.getElementById('sisaUang').style.color = sisa>=0 ? '#ffb300' : '#ff5252';
+  document.getElementById('infoBulan').textContent = `Ringkasan ${namaBulan(fBulan)} • ${dataBulan.length} transaksi`;
 
-  // Total di bawah
-  let totalIn = data.filter(x=>x.type==="income").reduce((a,b)=>a+b.amount,0);
-  let totalOut = data.filter(x=>x.type==="expense").reduce((a,b)=>a+b.amount,0);
-  csv += `\n;;;Total Pemasukan;${totalIn}\n;;;Total Pengeluaran;${totalOut}\n;;;Saldo;${totalIn-totalOut}\n`;
-
-  // \ufeff biar huruf Indonesia tidak jadi kacau di Excel
-  let blob = new Blob(["\ufeff" + csv], {type: "text/csv;charset=utf-8;"});
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  let today = new Date().toISOString().slice(0,10);
-  a.download = "Catatan-Keuangan-" + today + ".csv";
-  a.click();
-  alert("Berhasil download Excel! Cek di folder Download HP Ayah.");
+  let list=document.getElementById('list');
+  if(!filtered.length){ list.innerHTML='<p style="text-align:center;color:#aaa">Belum ada transaksi.</p>'; return; }
+  list.innerHTML=filtered.map(d=>`
+    <div class="item">
+      <div><b>${d.kategori}</b><br><small>${d.tanggal} • ${d.keterangan}</small></div>
+      <div style="text-align:right"><span class="badge ${d.jenis==='Pemasukan'?'badge-in':'badge-out'}">${d.jenis}</span><br><b class="${d.jenis==='Pemasukan'?'in':'out'}">${d.jenis==='Pemasukan'?'+':'-'}${rupiah(d.nominal)}</b><br><button class="hapus" onclick="hapus(${d.idx})">Hapus</button></div>
+    </div>`).join('');
 }
-render();
+function downloadExcel(){
+  let rows=[['Tanggal','Jenis','Kategori','Keterangan','Nominal']];
+  data.forEach(d=>rows.push([d.tanggal,d.jenis,d.kategori,d.keterangan,d.nominal]));
+  let csv=rows.map(r=>r.join(';')).join('\n');
+  let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='keuangan.csv'; a.click();
+}
+function backupJSON(){
+  let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})); a.download='backup-keuangan.json'; a.click();
+}
+tampil();
 </script>
 </body>
 </html>

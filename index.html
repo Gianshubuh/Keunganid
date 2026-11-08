@@ -15,7 +15,10 @@
   .row{display:flex;gap:12px}.row .card{flex:1}
   .small{font-size:11px;color:#888}
   input,select{width:100%;background:#2a2a2a;border:1px solid #444;color:#fff;padding:12px;border-radius:12px;margin-bottom:10px;font-size:16px;outline:none}
-  button{width:100%;background:#1d4ed8;color:#fff;border:none;padding:14px;border-radius:12px;font-size:16px;font-weight:bold}
+  button{width:100%;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
+  .btn-blue{background:#1d4ed8;color:#fff}
+  .btn-green{background:#15803d;color:#fff;margin-top:10px}
+  .btn-orange{background:#ea580c;color:#fff;margin-top:10px}
   .item{background:#1e1e1e;border:1px solid #333;padding:10px;border-radius:12px;margin-bottom:8px;display:flex;justify-content:space-between}
   .badge{font-size:11px;padding:3px 8px;border-radius:20px}
   .cash{background:#14532d;color:#86efac}
@@ -27,54 +30,43 @@
 
 <h2>Keuangan - November 2026</h2>
 
-<!-- PEMASUKAN DIBAGI 2 -->
 <div class="row">
-  <div class="card"><div class="label">Pemasukan - Cash</div><div class="green" id="inCash">Rp 0</div><div class="small">Tunai di dompet</div></div>
-  <div class="card"><div class="label">Pemasukan - Non Cash</div><div class="green" id="inNon">Rp 0</div><div class="small">Transfer / QRIS / E-Wallet</div></div>
+  <div class="card"><div class="label">Pemasukan - Cash</div><div class="green" id="inCash">Rp 0</div></div>
+  <div class="card"><div class="label">Pemasukan - Non Cash</div><div class="green" id="inNon">Rp 0</div></div>
 </div>
-
-<!-- PENGELUARAN DIBAGI 2 -->
 <div class="row">
   <div class="card"><div class="label">Pengeluaran - Cash</div><div class="red" id="outCash">Rp 0</div></div>
   <div class="card"><div class="label">Pengeluaran - Non Cash</div><div class="red" id="outNon">Rp 0</div></div>
 </div>
-
-<!-- TOTAL & SALDO -->
 <div class="card">
-  <div class="label">Total Pemasukan November 2026</div><div class="green" id="inTotal">Rp 0</div>
-  <div class="label" style="margin-top:8px">Total Pengeluaran November 2026</div><div class="red" id="outTotal">Rp 0</div>
+  <div class="label">Total Pemasukan</div><div class="green" id="inTotal">Rp 0</div>
+  <div class="label" style="margin-top:8px">Total Pengeluaran</div><div class="red" id="outTotal">Rp 0</div>
 </div>
 <div class="row">
   <div class="card"><div class="label">Saldo Cash</div><div class="blue" id="saldoCash">Rp 0</div></div>
   <div class="card"><div class="label">Saldo Non Cash</div><div class="blue" id="saldoNon">Rp 0</div></div>
 </div>
-<div class="card"><div class="label">Saldo / Sisa Uang - November 2026</div><div class="blue" id="saldoTotal">Rp 0</div></div>
+<div class="card"><div class="label">Saldo / Sisa Uang - November 2026</div><div class="blue" id="saldoTotal">Rp 0</div>
+  <!-- TOMBOL EXCEL -->
+  <button class="btn-green" onclick="exportExcel()">📥 Download Laporan Excel</button>
+  <button class="btn-orange" onclick="exportCSV()">📄 Download CSV (Excel juga bisa)</button>
+</div>
 
-<!-- FORM -->
 <div class="card">
   <h3>Tambah Transaksi</h3>
   <select id="jenis"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
-  
   <label class="small">Metode Pembayaran:</label>
-  <select id="metode" onchange="cekNonCash()">
-    <option value="Cash">Cash / Tunai</option>
-    <option value="Non Cash">Non Cash</option>
-  </select>
-
+  <select id="metode" onchange="cekNonCash()"><option value="Cash">Cash / Tunai</option><option value="Non Cash">Non Cash</option></select>
   <div id="detailNonCash" style="display:none">
-    <select id="detail">
-      <option>Transfer Bank</option>
-      <option>QRIS</option>
-      <option>E-Wallet (DANA / GoPay / OVO)</option>
-      <option>Kartu Debit / Kredit</option>
-    </select>
+    <select id="detail"><option>Transfer Bank</option><option>QRIS</option><option>E-Wallet (DANA / GoPay / OVO)</option><option>Kartu Debit / Kredit</option></select>
   </div>
-
   <input type="date" id="tanggal" value="2026-11-07">
-  <input type="number" id="nominal" placeholder="Nominal (Rp): Contoh: 500000">
+  <!-- INPUT RUPIAH AUTO FORMAT -->
+  <label class="small">Nominal (Rp): Ketik angka saja, otomatis jadi 50.000</label>
+  <input type="text" id="nominal" inputmode="numeric" placeholder="Contoh: 50.000" oninput="formatRupiah(this)">
   <input type="text" id="kategori" placeholder="Kategori, contoh: Makan">
   <input type="text" id="ket" placeholder="Keterangan">
-  <button onclick="simpan()">+ Simpan Transaksi</button>
+  <button class="btn-blue" onclick="simpan()">+ Simpan Transaksi</button>
 </div>
 
 <h3>Riwayat Transaksi</h3>
@@ -83,6 +75,16 @@
 <script>
 let data = JSON.parse(localStorage.getItem('keuangan_cash_noncash') || '[]');
 function fmt(n){ return 'Rp ' + n.toLocaleString('id-ID'); }
+// 1. FORMAT RUPIAH SAAT KETIK: 500000 -> 500.000
+function formatRupiah(el){
+  let angka = el.value.replace(/[^0-9]/g,'');
+  if(!angka){ el.value=''; return; }
+  el.value = parseInt(angka).toLocaleString('id-ID');
+}
+function getNominal(){
+  let v = document.getElementById('nominal').value.replace(/[^0-9]/g,'');
+  return parseInt(v) || 0;
+}
 function cekNonCash(){ document.getElementById('detailNonCash').style.display = document.getElementById('metode').value=='Non Cash' ? 'block' : 'none'; }
 function render(){
   let ic=0, inn=0, oc=0, on=0;
@@ -115,7 +117,7 @@ function simpan(){
   let metode=document.getElementById('metode').value;
   let detail=metode=='Non Cash'?document.getElementById('detail').value:'';
   let tanggal=document.getElementById('tanggal').value;
-  let nominal=parseInt(document.getElementById('nominal').value);
+  let nominal=getNominal();
   let kategori=document.getElementById('kategori').value||'Lainnya';
   let ket=document.getElementById('ket').value||'';
   if(!nominal){alert('Isi nominal dulu Ayah!');return;}
@@ -125,6 +127,37 @@ function simpan(){
   render();
 }
 function hapus(i){ if(confirm('Hapus?')){data.splice(i,1);localStorage.setItem('keuangan_cash_noncash',JSON.stringify(data));render();} }
+
+// 2. EXPORT KE EXCEL - BISA DIBUKA DI EXCEL HP / LAPTOP
+function exportExcel(){
+  let ic=0, inn=0, oc=0, on=0;
+  data.forEach(t=>{
+    if(t.jenis=='Pemasukan' && t.metode=='Cash') ic+=t.nominal;
+    if(t.jenis=='Pemasukan' && t.metode=='Non Cash') inn+=t.nominal;
+    if(t.jenis=='Pengeluaran' && t.metode=='Cash') oc+=t.nominal;
+    if(t.jenis=='Pengeluaran' && t.metode=='Non Cash') on+=t.nominal;
+  });
+  let html = `<table border="1">
+    <tr><td colspan="7"><b>LAPORAN KEUANGAN - NOVEMBER 2026</b></td></tr>
+    <tr><td colspan="7">Pemasukan Cash: ${ic} | Pemasukan Non Cash: ${inn} | Total Pemasukan: ${ic+inn}</td></tr>
+    <tr><td colspan="7">Pengeluaran Cash: ${oc} | Pengeluaran Non Cash: ${on} | Total Pengeluaran: ${oc+on}</td></tr>
+    <tr><td colspan="7">Saldo Cash: ${ic-oc} | Saldo Non Cash: ${inn-on} | Saldo Total: ${(ic+inn)-(oc+on)}</td></tr>
+    <tr><td></td></tr>
+    <tr><th>Tanggal</th><th>Jenis</th><th>Metode</th><th>Detail Non Cash</th><th>Kategori</th><th>Keterangan</th><th>Nominal (Rp)</th></tr>`;
+  data.forEach(t=>{
+    html+=`<tr><td>${t.tanggal}</td><td>${t.jenis}</td><td>${t.metode}</td><td>${t.detail||''}</td><td>${t.kategori}</td><td>${t.ket}</td><td>${t.nominal}</td></tr>`;
+  });
+  html+=`</table>`;
+  let blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel'});
+  let a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='Laporan_Keuangan_November_2026.xls'; a.click();
+}
+function exportCSV(){
+  let csv = '\ufeffTanggal;Jenis;Metode;Detail Non Cash;Kategori;Keterangan;Nominal (Rp)\n';
+  data.forEach(t=>{ csv+=`${t.tanggal};${t.jenis};${t.metode};${t.detail||''};${t.kategori};${t.ket};${t.nominal}\n`; });
+  let blob = new Blob([csv], {type:'text/csv'});
+  let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Laporan_Keuangan_November_2026.csv'; a.click();
+}
 render();
 </script>
 </body>

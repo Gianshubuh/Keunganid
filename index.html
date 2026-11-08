@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keuangan Cash & Non Cash</title>
+<title>Keuangan Per Bulan - Cash & Non Cash</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
   *{box-sizing:border-box;font-family:sans-serif}
   body{background:#111;color:#fff;margin:0;padding:16px}
   .card{background:#1e1e1e;border:1px solid #333;border-radius:16px;padding:14px;margin-bottom:12px}
   .label{color:#aaa;font-size:13px}
-  .green{color:#4ade80;font-size:22px;font-weight:bold}
-  .red{color:#f87171;font-size:22px;font-weight:bold}
+  .green{color:#4ade80;font-size:21px;font-weight:bold;word-break:break-word}
+  .red{color:#f87171;font-size:21px;font-weight:bold;word-break:break-word}
   .blue{color:#60a5fa;font-size:22px;font-weight:bold}
   .row{display:flex;gap:12px}.row .card{flex:1}
   .small{font-size:11px;color:#888}
@@ -19,16 +19,36 @@
   button{width:100%;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
   .btn-blue{background:#1d4ed8;color:#fff}
   .btn-green{background:#15803d;color:#fff}
+  .btn-dark{background:#333;color:#fff}
+  .btn-nav{background:#2a2a2a;color:#fff;width:auto;padding:10px 14px}
   .item{background:#1e1e1e;border:1px solid #333;padding:10px;border-radius:12px;margin-bottom:8px;display:flex;justify-content:space-between}
   .badge{font-size:11px;padding:3px 8px;border-radius:20px}
   .cash{background:#14532d;color:#86efac}
   .noncash{background:#1e3a8a;color:#93c5fd}
   .hapus{background:#dc2626;padding:5px 10px;border-radius:8px;font-size:12px;width:auto;border:none;color:#fff}
+  .bulan-row{display:flex;gap:8px;align-items:center}
+  .bulan-row input{flex:1}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{border:1px solid #333;padding:8px;text-align:left}
+  .export-box{border:2px solid #15803d !important}
 </style>
 </head>
 <body>
 
-<h2>Keuangan - November 2026</h2>
+<h2 id="judulBulan">Keuangan - November 2026</h2>
+<div class="card" style="border:2px solid #1d4ed8">
+  <div class="label">Lihat Laporan Bulan:</div>
+  <div class="bulan-row">
+    <button class="btn-nav" onclick="geserBulan(-1)">◀</button>
+    <input type="month" id="bulanFilter" value="2026-11" onchange="render()">
+    <button class="btn-nav" onclick="geserBulan(1)">▶</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button onclick="lihatSemua()" style="background:#333;color:#fff;padding:10px;font-size:13px">Lihat Semua Bulan</button>
+    <button onclick="bulanIni()" style="background:#333;color:#fff;padding:10px;font-size:13px">Bulan Ini</button>
+  </div>
+  <div class="small" id="infoBulan" style="margin-top:8px">Menampilkan: November 2026 saja</div>
+</div>
 
 <div class="row">
   <div class="card"><div class="label">Pemasukan - Cash</div><div class="green" id="inCash">Rp 0</div></div>
@@ -38,7 +58,17 @@
   <div class="card"><div class="label">Pengeluaran - Cash</div><div class="red" id="outCash">Rp 0</div></div>
   <div class="card"><div class="label">Pengeluaran - Non Cash</div><div class="red" id="outNon">Rp 0</div></div>
 </div>
-<div class="card"><div class="label">Saldo / Sisa Uang - November 2026</div><div class="blue" id="saldoTotal">Rp 0</div></div>
+<div class="card">
+  <div class="label">Total Pemasukan <span id="labelIn"></span></div><div class="green" id="inTotal">Rp 0</div>
+  <div class="label" style="margin-top:8px">Total Pengeluaran <span id="labelOut"></span></div><div class="red" id="outTotal">Rp 0</div>
+  <div class="label" style="margin-top:8px">Saldo / Sisa Uang <span id="labelSaldo"></span></div><div class="blue" id="saldoTotal">Rp 0</div>
+  <div class="small" style="margin-top:8px">Saldo Cash: <span id="saldoCashTxt">Rp 0</span> | Saldo Non Cash: <span id="saldoNonTxt">Rp 0</span></div>
+</div>
+
+<div class="card">
+  <h3 style="margin:0 0 8px">Cashflow Per Bulan</h3>
+  <div id="rekapBulanan"></div>
+</div>
 
 <div class="card">
   <h3>Tambah Transaksi</h3>
@@ -48,61 +78,130 @@
   <div id="detailNonCash" style="display:none">
     <select id="detail"><option>Transfer Bank</option><option>QRIS</option><option>E-Wallet (DANA / GoPay / OVO)</option><option>Kartu Debit / Kredit</option></select>
   </div>
-  <input type="date" id="tanggal" value="2026-11-07">
+  <input type="date" id="tanggal" value="2026-11-08">
   <label class="small">Nominal (Rp): Ketik 500000 otomatis jadi 500.000</label>
   <input type="text" id="nominal" inputmode="numeric" placeholder="Contoh: 50.000" autocomplete="off">
   <input type="text" id="kategori" placeholder="Kategori, contoh: Makan">
   <input type="text" id="ket" placeholder="Keterangan">
   <button class="btn-blue" onclick="simpan()">+ Simpan Transaksi</button>
+  <div class="small" style="text-align:center;margin-top:8px">Transaksi masuk otomatis ke bulan sesuai tanggalnya.</div>
 </div>
 
-<h3>Riwayat Transaksi</h3>
+<h3>Riwayat Transaksi <span id="judulRiwayat"></span></h3>
 <div id="list"></div>
 
-<!-- EXPORT EXCEL CUMA DI BAWAH SAJA -->
-<div style="margin-top:16px;margin-bottom:30px">
-  <button class="btn-green" onclick="exportExcelAsli()">📥 EXPORT KE EXCEL (.xlsx) - Buka di APK Excel</button>
-  <div class="small" style="text-align:center;margin-top:8px">File akan terdownload, klik file-nya -> Buka dengan Excel</div>
+<!-- EXPORT DI BAWAH SAJA - BISA PILIH 1 BULAN / SEMUA BULAN -->
+<div class="card export-box" style="margin-top:16px;margin-bottom:30px">
+  <h3 style="margin:0 0 10px">📥 Export Ke Excel</h3>
+  <label class="small">Pilih yang mau di-export:</label>
+  <select id="pilihanExport" onchange="updateBtnExport()">
+    <option value="bulan_ini">Bulan Yang Sedang Dilihat Saja</option>
+    <option value="semua_pisah">Semua Bulan - 1 File, Sheet Per Bulan (Rekomendasi)</option>
+    <option value="semua_gabung">Semua Bulan - Gabung Jadi 1 Sheet</option>
+  </select>
+  <div class="small" id="infoExport" style="margin-bottom:10px">Akan export: November 2026 saja</div>
+  <button class="btn-green" onclick="exportExcelBaru()" id="btnExport">📥 EXPORT EXCEL - November 2026</button>
+  <div class="small" style="text-align:center;margin-top:8px">File .xlsx asli, bisa dibuka di APK Excel</div>
 </div>
 
 <script>
 let data = JSON.parse(localStorage.getItem('keuangan_cash_noncash') || '[]');
+let lihatSemuaBulan = false;
 function fmt(n){ return 'Rp ' + n.toLocaleString('id-ID'); }
+function namaBulan(ym){
+  if(!ym) return 'Semua Bulan';
+  let [y,m]=ym.split('-'); let nama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return nama[parseInt(m)-1]+' '+y;
+}
+function getBulanFilter(){ return document.getElementById('bulanFilter').value; }
+function dataFiltered(){
+  if(lihatSemuaBulan) return data;
+  let bf=getBulanFilter();
+  return data.filter(t=> t.tanggal && t.tanggal.startsWith(bf));
+}
+function geserBulan(n){
+  lihatSemuaBulan=false;
+  let v=document.getElementById('bulanFilter').value || '2026-11';
+  let d=new Date(v+'-01'); d.setMonth(d.getMonth()+n);
+  let ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  document.getElementById('bulanFilter').value=ym; render();
+}
+function lihatSemua(){ lihatSemuaBulan=true; render(); }
+function bulanIni(){ lihatSemuaBulan=false; let now=new Date(); document.getElementById('bulanFilter').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'); render(); }
 
-// FORMAT RUPIAH OTOMATIS: 500000 -> 500.000
-let inputNominal = document.getElementById('nominal');
+let inputNominal=document.getElementById('nominal');
 inputNominal.addEventListener('input', function(){
-  let angkaBersih = this.value.replace(/[^0-9]/g,'');
-  if(!angkaBersih){ this.value=''; return; }
-  let baru = parseInt(angkaBersih).toLocaleString('id-ID');
-  this.value = baru;
-  this.setSelectionRange(baru.length, baru.length);
+  let a=this.value.replace(/[^0-9]/g,''); if(!a){this.value='';return;}
+  let baru=parseInt(a).toLocaleString('id-ID'); this.value=baru; this.setSelectionRange(baru.length,baru.length);
 });
-function getNominal(){ return parseInt(document.getElementById('nominal').value.replace(/[^0-9]/g,'')) || 0; }
+function getNominal(){ return parseInt(document.getElementById('nominal').value.replace(/[^0-9]/g,''))||0; }
+function cekNonCash(){ document.getElementById('detailNonCash').style.display=document.getElementById('metode').value=='Non Cash'?'block':'none'; }
 
-function cekNonCash(){ document.getElementById('detailNonCash').style.display = document.getElementById('metode').value=='Non Cash' ? 'block' : 'none'; }
-function render(){
+function hitung(arr){
   let ic=0, inn=0, oc=0, on=0;
-  data.forEach(t=>{
+  arr.forEach(t=>{
     if(t.jenis=='Pemasukan' && t.metode=='Cash') ic+=t.nominal;
     if(t.jenis=='Pemasukan' && t.metode=='Non Cash') inn+=t.nominal;
     if(t.jenis=='Pengeluaran' && t.metode=='Cash') oc+=t.nominal;
     if(t.jenis=='Pengeluaran' && t.metode=='Non Cash') on+=t.nominal;
   });
-  document.getElementById('inCash').innerText=fmt(ic);
-  document.getElementById('inNon').innerText=fmt(inn);
-  document.getElementById('outCash').innerText=fmt(oc);
-  document.getElementById('outNon').innerText=fmt(on);
-  document.getElementById('saldoTotal').innerText=fmt((ic+inn)-(oc+on));
+  return {ic,inn,oc,on,totalIn:ic+inn,totalOut:oc+on,saldo:(ic+inn)-(oc+on),saldoCash:ic-oc,saldoNon:inn-on};
+}
+
+function render(){
+  let bf=getBulanFilter();
+  let label = lihatSemuaBulan ? 'Semua Bulan' : namaBulan(bf);
+  document.getElementById('judulBulan').innerText='Keuangan - '+label;
+  document.getElementById('infoBulan').innerText = lihatSemuaBulan ? 'Menampilkan: Semua Bulan digabung' : 'Menampilkan: '+label+' saja';
+  document.getElementById('labelIn').innerText='- '+label;
+  document.getElementById('labelOut').innerText='- '+label;
+  document.getElementById('labelSaldo').innerText='- '+label;
+  document.getElementById('judulRiwayat').innerText='- '+label;
+  updateBtnExport();
+
+  let f=dataFiltered();
+  let h=hitung(f);
+  document.getElementById('inCash').innerText=fmt(h.ic);
+  document.getElementById('inNon').innerText=fmt(h.inn);
+  document.getElementById('outCash').innerText=fmt(h.oc);
+  document.getElementById('outNon').innerText=fmt(h.on);
+  document.getElementById('inTotal').innerText=fmt(h.totalIn);
+  document.getElementById('outTotal').innerText=fmt(h.totalOut);
+  document.getElementById('saldoTotal').innerText=fmt(h.saldo);
+  document.getElementById('saldoCashTxt').innerText=fmt(h.saldoCash);
+  document.getElementById('saldoNonTxt').innerText=fmt(h.saldoNon);
+
   let html='';
-  data.slice().reverse().forEach((t,i)=>{
-    let idx=data.length-1-i;
+  f.slice().reverse().forEach(t=>{
+    let idx=data.indexOf(t);
     let warna=t.jenis=='Pemasukan'?'#4ade80':'#f87171';
     let tanda=t.jenis=='Pemasukan'?'+':'-';
     html+=`<div class="item"><div><b>${t.kategori}</b> <span class="badge ${t.metode=='Cash'?'cash':'noncash'}">${t.metode} ${t.detail?'- '+t.detail:''}</span><br><span class="small">${t.tanggal} - ${t.ket} - ${t.jenis}</span></div><div style="text-align:right"><b style="color:${warna}">${tanda} ${fmt(t.nominal)}</b><br><button class="hapus" onclick="hapus(${idx})">Hapus</button></div></div>`;
   });
-  document.getElementById('list').innerHTML=html||'<p style="color:#888">Belum ada transaksi</p>';
+  document.getElementById('list').innerHTML=html||'<p style="color:#888">Belum ada transaksi di bulan ini</p>';
+
+  let perBulan={};
+  data.forEach(t=>{
+    let ym=t.tanggal? t.tanggal.slice(0,7):'';
+    if(!perBulan[ym]) perBulan[ym]={in:0,out:0};
+    if(t.jenis=='Pemasukan') perBulan[ym].in+=t.nominal; else perBulan[ym].out+=t.nominal;
+  });
+  let keys=Object.keys(perBulan).sort().reverse();
+  let rHtml='<table><tr><th>Bulan</th><th>Masuk</th><th>Keluar</th><th>Saldo</th></tr>';
+  if(keys.length==0) rHtml+='<tr><td colspan="4">Belum ada data</td></tr>';
+  keys.forEach(k=>{ let s=perBulan[k]; rHtml+=`<tr style="cursor:pointer" onclick="pilihBulan('${k}')"><td>${namaBulan(k)} ${k==bf && !lihatSemuaBulan?'◀ Lihat':''}</td><td style="color:#4ade80">${fmt(s.in)}</td><td style="color:#f87171">${fmt(s.out)}</td><td style="color:#60a5fa">${fmt(s.in-s.out)}</td></tr>`; });
+  rHtml+='</table><div class="small">Klik baris bulan untuk melihat detailnya</div>';
+  document.getElementById('rekapBulanan').innerHTML=rHtml;
 }
+function updateBtnExport(){
+  let pil=document.getElementById('pilihanExport').value;
+  let bf=getBulanFilter();
+  let label = lihatSemuaBulan ? 'Semua Bulan' : namaBulan(bf);
+  if(pil=='bulan_ini'){ document.getElementById('infoExport').innerText='Akan export: '+label+' saja'; document.getElementById('btnExport').innerText='📥 EXPORT EXCEL - '+label; }
+  if(pil=='semua_pisah'){ document.getElementById('infoExport').innerText='Akan export: Semua bulan, 1 file dengan Sheet per bulan (Oktober, November, dst)'; document.getElementById('btnExport').innerText='📥 EXPORT SEMUA BULAN - Sheet Per Bulan'; }
+  if(pil=='semua_gabung'){ document.getElementById('infoExport').innerText='Akan export: Semua bulan digabung jadi 1 tabel panjang'; document.getElementById('btnExport').innerText='📥 EXPORT SEMUA BULAN - Gabung 1 Sheet'; }
+}
+function pilihBulan(ym){ lihatSemuaBulan=false; document.getElementById('bulanFilter').value=ym; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 function simpan(){
   let jenis=document.getElementById('jenis').value;
   let metode=document.getElementById('metode').value;
@@ -112,46 +211,104 @@ function simpan(){
   let kategori=document.getElementById('kategori').value||'Lainnya';
   let ket=document.getElementById('ket').value||'';
   if(!nominal){alert('Isi nominal dulu Ayah!');return;}
+  if(!tanggal){alert('Pilih tanggal dulu!');return;}
   data.push({jenis,metode,detail,tanggal,nominal,kategori,ket});
   localStorage.setItem('keuangan_cash_noncash',JSON.stringify(data));
+  lihatSemuaBulan=false; document.getElementById('bulanFilter').value=tanggal.slice(0,7);
   document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('ket').value='';
   render();
 }
 function hapus(i){ if(confirm('Hapus?')){data.splice(i,1);localStorage.setItem('keuangan_cash_noncash',JSON.stringify(data));render();} }
 
-// EXPORT EXCEL ASLI .xlsx - BISA DIBUKA DI APK EXCEL
-function exportExcelAsli(){
-  if(data.length==0){ alert('Belum ada transaksi, isi dulu Ayah!'); return; }
-  let ic=0, inn=0, oc=0, on=0;
-  data.forEach(t=>{
-    if(t.jenis=='Pemasukan' && t.metode=='Cash') ic+=t.nominal;
-    if(t.jenis=='Pemasukan' && t.metode=='Non Cash') inn+=t.nominal;
-    if(t.jenis=='Pengeluaran' && t.metode=='Cash') oc+=t.nominal;
-    if(t.jenis=='Pengeluaran' && t.metode=='Non Cash') on+=t.nominal;
-  });
-  let rekap = [
-    ['LAPORAN KEUANGAN - NOVEMBER 2026'],[''],
-    ['Pemasukan Cash', ic],
-    ['Pemasukan Non Cash', inn],
-    ['Total Pemasukan', ic+inn],[''],
-    ['Pengeluaran Cash', oc],
-    ['Pengeluaran Non Cash', on],
-    ['Total Pengeluaran', oc+on],[''],
-    ['Saldo Cash', ic-oc],
-    ['Saldo Non Cash', inn-on],
-    ['Saldo Total', (ic+inn)-(oc+on)],
-  ];
-  let detail = [['Tanggal','Jenis','Metode','Detail Non Cash','Kategori','Keterangan','Nominal (Rp)']];
-  data.forEach(t=>{ detail.push([t.tanggal, t.jenis, t.metode, t.detail||'', t.kategori, t.ket, t.nominal]); });
-  let wb = XLSX.utils.book_new();
-  let ws1 = XLSX.utils.aoa_to_sheet(rekap);
-  let ws2 = XLSX.utils.aoa_to_sheet(detail);
-  ws1['!cols']=[{wch:25},{wch:20}];
-  ws2['!cols']=[{wch:12},{wch:12},{wch:12},{wch:20},{wch:15},{wch:20},{wch:15}];
+// EXPORT BARU - BISA 1 BULAN ATAU SEMUA BULAN
+function exportExcelBaru(){
+  let pil=document.getElementById('pilihanExport').value;
+  if(data.length==0){ alert('Belum ada transaksi!'); return; }
+
+  // 1. CUMA BULAN INI
+  if(pil=='bulan_ini'){
+    let f=dataFiltered();
+    let bf=getBulanFilter();
+    let label = lihatSemuaBulan ? 'Semua_Bulan' : namaBulan(bf).replace(' ','_');
+    let judul = lihatSemuaBulan ? 'SEMUA BULAN' : namaBulan(bf).toUpperCase();
+    if(f.length==0){ alert('Tidak ada transaksi di bulan ini!'); return; }
+    exportSatuBulan(f, judul, "Laporan_Keuangan_"+label+".xlsx");
+    return;
+  }
+
+  // 2. SEMUA BULAN - SHEET PER BULAN
+  if(pil=='semua_pisah'){
+    let wb=XLSX.utils.book_new();
+    // Sheet Rekap Semua Bulan
+    let perBulan={};
+    data.forEach(t=>{ let ym=t.tanggal.slice(0,7); if(!perBulan[ym]) perBulan[ym]=[]; perBulan[ym].push(t); });
+    let rekapAll=[['REKAP CASHFLOW PER BULAN'],[''],['Bulan','Total Pemasukan','Total Pengeluaran','Saldo','Pemasukan Cash','Pemasukan Non Cash','Pengeluaran Cash','Pengeluaran Non Cash']];
+    Object.keys(perBulan).sort().forEach(ym=>{
+      let h=hitung(perBulan[ym]);
+      rekapAll.push([namaBulan(ym), h.totalIn, h.totalOut, h.saldo, h.ic, h.inn, h.oc, h.on]);
+    });
+    let hAll=hitung(data);
+    rekapAll.push(['TOTAL SEMUA BULAN', hAll.totalIn, hAll.totalOut, hAll.saldo, hAll.ic, hAll.inn, hAll.oc, hAll.on]);
+    let wsRekap=XLSX.utils.aoa_to_sheet(rekapAll);
+    wsRekap['!cols']=[{wch:18},{wch:18},{wch:18},{wch:15},{wch:18},{wch:20},{wch:18},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, wsRekap, "Rekap Semua Bulan");
+
+    // Satu Sheet per bulan
+    Object.keys(perBulan).sort().forEach(ym=>{
+      let arr=perBulan[ym];
+      let h=hitung(arr);
+      let rows=[
+        ['LAPORAN - '+namaBulan(ym).toUpperCase()],[''],
+        ['Pemasukan Cash', h.ic],['Pemasukan Non Cash', h.inn],['Total Pemasukan', h.totalIn],[''],
+        ['Pengeluaran Cash', h.oc],['Pengeluaran Non Cash', h.on],['Total Pengeluaran', h.totalOut],[''],
+        ['Saldo Cash', h.saldoCash],['Saldo Non Cash', h.saldoNon],['Saldo Total', h.saldo],[''],
+        ['Tanggal','Jenis','Metode','Detail Non Cash','Kategori','Keterangan','Nominal (Rp)']
+      ];
+      arr.forEach(t=>{ rows.push([t.tanggal, t.jenis, t.metode, t.detail||'', t.kategori, t.ket, t.nominal]); });
+      let ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=[{wch:12},{wch:12},{wch:12},{wch:20},{wch:15},{wch:20},{wch:15}];
+      // Nama sheet max 31 karakter, contoh: Okt 2026
+      let namaSheet = namaBulan(ym).replace('Januari','Jan').replace('Februari','Feb').replace('September','Sep').replace('Oktober','Okt').replace('November','Nov').replace('Desember','Des');
+      XLSX.utils.book_append_sheet(wb, ws, namaSheet);
+    });
+    XLSX.writeFile(wb, "Laporan_Keuangan_Semua_Bulan_Per_Sheet.xlsx");
+    alert('Berhasil! 1 file Excel terdownload, di dalamnya ada Sheet Rekap + Sheet per bulan (Oktober, November, dll). Buka di APK Excel, geser tab di bawah.');
+    return;
+  }
+
+  // 3. SEMUA BULAN - GABUNG 1 SHEET
+  if(pil=='semua_gabung'){
+    let hAll=hitung(data);
+    let rows=[
+      ['LAPORAN KEUANGAN - SEMUA BULAN'],[''],
+      ['Total Pemasukan Cash', hAll.ic],['Total Pemasukan Non Cash', hAll.inn],['Total Pemasukan', hAll.totalIn],[''],
+      ['Total Pengeluaran Cash', hAll.oc],['Total Pengeluaran Non Cash', hAll.on],['Total Pengeluaran', hAll.totalOut],[''],
+      ['Saldo Total', hAll.saldo],[''],
+      ['Bulan','Tanggal','Jenis','Metode','Detail Non Cash','Kategori','Keterangan','Nominal (Rp)']
+    ];
+    let sorted=[...data].sort((a,b)=> a.tanggal.localeCompare(b.tanggal));
+    sorted.forEach(t=>{ rows.push([namaBulan(t.tanggal.slice(0,7)), t.tanggal, t.jenis, t.metode, t.detail||'', t.kategori, t.ket, t.nominal]); });
+    let wb=XLSX.utils.book_new();
+    let ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:15},{wch:12},{wch:12},{wch:12},{wch:20},{wch:15},{wch:20},{wch:15}];
+    XLSX.utils.book_append_sheet(wb, ws, "Semua Transaksi");
+    XLSX.writeFile(wb, "Laporan_Keuangan_Semua_Bulan_Gabung.xlsx");
+    alert('Berhasil! Semua bulan digabung jadi 1 file Excel.');
+  }
+}
+function exportSatuBulan(f, judul, fileName){
+  let h=hitung(f);
+  let rekap=[['LAPORAN KEUANGAN - '+judul],[''],['Pemasukan Cash', h.ic],['Pemasukan Non Cash', h.inn],['Total Pemasukan', h.totalIn],[''],['Pengeluaran Cash', h.oc],['Pengeluaran Non Cash', h.on],['Total Pengeluaran', h.totalOut],[''],['Saldo Cash', h.saldoCash],['Saldo Non Cash', h.saldoNon],['Saldo Total', h.saldo]];
+  let detail=[['Tanggal','Jenis','Metode','Detail Non Cash','Kategori','Keterangan','Nominal (Rp)']];
+  f.forEach(t=>{ detail.push([t.tanggal, t.jenis, t.metode, t.detail||'', t.kategori, t.ket, t.nominal]); });
+  let wb=XLSX.utils.book_new();
+  let ws1=XLSX.utils.aoa_to_sheet(rekap);
+  let ws2=XLSX.utils.aoa_to_sheet(detail);
+  ws1['!cols']=[{wch:25},{wch:20}]; ws2['!cols']=[{wch:12},{wch:12},{wch:12},{wch:20},{wch:15},{wch:20},{wch:15}];
   XLSX.utils.book_append_sheet(wb, ws1, "Rekap");
   XLSX.utils.book_append_sheet(wb, ws2, "Transaksi");
-  XLSX.writeFile(wb, "Laporan_Keuangan_November_2026.xlsx");
-  alert('Berhasil! File Laporan_Keuangan_November_2026.xlsx terdownload. Buka di APK Excel ya Ayah.');
+  XLSX.writeFile(wb, fileName);
+  alert('Berhasil! Laporan '+judul+' terdownload.');
 }
 render();
 </script>

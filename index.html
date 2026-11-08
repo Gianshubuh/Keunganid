@@ -106,13 +106,18 @@
   </select>
   <div class="small" id="infoExport" style="margin-bottom:10px">Akan export: November 2026 saja</div>
   <button class="btn-green" onclick="exportExcelBaru()" id="btnExport">📥 EXPORT EXCEL - November 2026</button>
-  <div class="small" style="text-align:center;margin-top:8px">Di bawah tabel Excel: TOTAL PEMASUKAN - TOTAL PENGELUARAN = SISA SALDO (Cash + Non Cash)</div>
+  <div class="small" style="text-align:center;margin-top:8px">Di Excel sudah ada kolom Tanggal + TOTAL PEMASUKAN - PENGELUARAN = SISA SALDO</div>
 </div>
 
 <script>
 let data = JSON.parse(localStorage.getItem('keuangan_cash_noncash') || '[]');
 let lihatSemuaBulan = false;
 function fmt(n){ return 'Rp ' + n.toLocaleString('id-ID'); }
+function fmtTgl(t){
+  // 2026-11-07 -> 07/11/2026
+  if(!t) return '';
+  let p=t.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
+}
 function namaBulan(ym){
   if(!ym) return 'Semua Bulan';
   let [y,m]=ym.split('-'); let nama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -151,15 +156,19 @@ function hitung(arr){
   });
   return {ic,inn,oc,on,totalIn:ic+inn,totalOut:oc+on,saldo:(ic+inn)-(oc+on),saldoCash:ic-oc,saldoNon:inn-on};
 }
+// KUMPULKAN PER KATEGORI + TANGGAL
 function grupKategori(arr){
   let map={};
   arr.forEach(t=>{
     let kunci=t.jenis+'|'+t.kategori;
-    if(!map[kunci]) map[kunci]={jenis:t.jenis,kategori:t.kategori,total:0,jumlah:0,kets:[],metodes:{}};
+    if(!map[kunci]) map[kunci]={jenis:t.jenis,kategori:t.kategori,total:0,jumlah:0,kets:[],metodes:{},tanggalList:[]};
     map[kunci].total+=t.nominal; map[kunci].jumlah++;
     if(t.ket) map[kunci].kets.push(t.ket+' ('+fmt(t.nominal)+')');
     map[kunci].metodes[t.metode]=(map[kunci].metodes[t.metode]||0)+t.nominal;
+    if(t.tanggal && !map[kunci].tanggalList.includes(t.tanggal)) map[kunci].tanggalList.push(t.tanggal);
   });
+  // Urutkan tanggal
+  Object.values(map).forEach(x=> x.tanggalList.sort());
   return Object.values(map).sort((a,b)=> b.total-a.total);
 }
 
@@ -186,17 +195,18 @@ function render(){
   document.getElementById('saldoCashTxt').innerText=fmt(h.saldoCash);
   document.getElementById('saldoNonTxt').innerText=fmt(h.saldoNon);
 
-  // TABEL KATEGORI DI APLIKASI - BAWAHNYA PEMASUKAN - PENGELUARAN = SISA SALDO
+  // TABEL KATEGORI DI APLIKASI - SUDAH ADA TANGGAL
   let g=grupKategori(f);
-  let kh='<table><tr><th>Kategori</th><th>Jenis</th><th>Total</th><th>Keterangan</th></tr>';
-  if(g.length==0) kh+='<tr><td colspan="4">Belum ada data</td></tr>';
+  let kh='<table><tr><th>Tanggal</th><th>Kategori</th><th>Jenis</th><th>Total</th><th>Keterangan</th></tr>';
+  if(g.length==0) kh+='<tr><td colspan="5">Belum ada data</td></tr>';
   g.forEach(x=>{
-    kh+=`<tr><td><b>${x.kategori}</b></td><td style="color:${x.jenis=='Pemasukan'?'#4ade80':'#f87171'}">${x.jenis}</td><td><b>${fmt(x.total)}</b></td><td style="font-size:12px">${x.kets.join('<br>')||'-'}</td></tr>`;
+    let tglTxt = x.tanggalList.map(fmtTgl).join('<br>');
+    kh+=`<tr><td>${tglTxt}</td><td><b>${x.kategori}</b></td><td style="color:${x.jenis=='Pemasukan'?'#4ade80':'#f87171'}">${x.jenis}</td><td><b>${fmt(x.total)}</b></td><td style="font-size:12px">${x.kets.join('<br>')||'-'}</td></tr>`;
   });
   if(g.length>0){
-    kh+=`<tr class="total-row"><td colspan="2"><b>TOTAL PEMASUKAN</b></td><td><b>${fmt(h.totalIn)}</b></td><td></td></tr>`;
-    kh+=`<tr class="total-row"><td colspan="2"><b>TOTAL PENGELUARAN</b></td><td><b>${fmt(h.totalOut)}</b></td><td></td></tr>`;
-    kh+=`<tr class="saldo-row"><td colspan="2"><b>SISA SALDO (Cash + Non Cash)</b></td><td><b>${fmt(h.saldo)}</b></td><td>Sisa Cash: ${fmt(h.saldoCash)} | Sisa Non Cash: ${fmt(h.saldoNon)}</td></tr>`;
+    kh+=`<tr class="total-row"><td colspan="3"><b>TOTAL PEMASUKAN</b></td><td><b>${fmt(h.totalIn)}</b></td><td></td></tr>`;
+    kh+=`<tr class="total-row"><td colspan="3"><b>TOTAL PENGELUARAN</b></td><td><b>${fmt(h.totalOut)}</b></td><td></td></tr>`;
+    kh+=`<tr class="saldo-row"><td colspan="3"><b>SISA SALDO (Cash + Non Cash)</b></td><td><b>${fmt(h.saldo)}</b></td><td>Sisa Cash: ${fmt(h.saldoCash)} | Sisa Non Cash: ${fmt(h.saldoNon)}</td></tr>`;
   }
   kh+='</table>';
   document.getElementById('rekapKategori').innerHTML=kh;
@@ -206,7 +216,7 @@ function render(){
     let idx=data.indexOf(t);
     let warna=t.jenis=='Pemasukan'?'#4ade80':'#f87171';
     let tanda=t.jenis=='Pemasukan'?'+':'-';
-    html+=`<div class="item"><div><b>${t.kategori}</b> <span class="badge ${t.metode=='Cash'?'cash':'noncash'}">${t.metode} ${t.detail?'- '+t.detail:''}</span><br><span class="small">${t.tanggal} - ${t.ket} - ${t.jenis}</span></div><div style="text-align:right"><b style="color:${warna}">${tanda} ${fmt(t.nominal)}</b><br><button class="hapus" onclick="hapus(${idx})">Hapus</button></div></div>`;
+    html+=`<div class="item"><div><b>${t.kategori}</b> <span class="badge ${t.metode=='Cash'?'cash':'noncash'}">${t.metode} ${t.detail?'- '+t.detail:''}</span><br><span class="small">${fmtTgl(t.tanggal)} - ${t.ket} - ${t.jenis}</span></div><div style="text-align:right"><b style="color:${warna}">${tanda} ${fmt(t.nominal)}</b><br><button class="hapus" onclick="hapus(${idx})">Hapus</button></div></div>`;
   });
   document.getElementById('list').innerHTML=html||'<p style="color:#888">Belum ada transaksi di bulan ini</p>';
 
@@ -229,9 +239,9 @@ function updateBtnExport(){
   let pil=document.getElementById('pilihanExport').value;
   let bf=getBulanFilter();
   let label = lihatSemuaBulan ? 'Semua Bulan' : namaBulan(bf);
-  if(pil=='bulan_ini'){ document.getElementById('infoExport').innerText='Akan export: '+label+' - Bawahnya ada Sisa Saldo = Pemasukan - Pengeluaran'; document.getElementById('btnExport').innerText='📥 EXPORT EXCEL - '+label; }
-  if(pil=='semua_pisah'){ document.getElementById('infoExport').innerText='Akan export: Semua bulan - Bawahnya ada Sisa Saldo'; document.getElementById('btnExport').innerText='📥 EXPORT SEMUA BULAN - Lengkap Kategori'; }
-  if(pil=='semua_gabung'){ document.getElementById('infoExport').innerText='Akan export: Semua bulan digabung - Ada Sisa Saldo'; document.getElementById('btnExport').innerText='📥 EXPORT SEMUA BULAN - Gabung Detail'; }
+  if(pil=='bulan_ini'){ document.getElementById('infoExport').innerText='Akan export: '+label+' - Ada Tanggal + Sisa Saldo'; document.getElementById('btnExport').innerText='📥 EXPORT EXCEL - '+label; }
+  if(pil=='semua_pisah'){ document.getElementById('infoExport').innerText='Akan export: Semua bulan - Ada Tanggal + Sisa Saldo'; document.getElementById('btnExport').innerText='📥 EXPORT SEMUA BULAN - Lengkap Kategori'; }
+  if(pil=='semua_gabung'){ document.getElementById('infoExport').innerText='Akan export: Semua bulan digabung - Ada Tanggal + Sisa Saldo'; document.getElementById('btnExport').innerText='📥 EXPORT SEMUA BULAN - Gabung Detail'; }
 }
 function pilihBulan(ym){ lihatSemuaBulan=false; document.getElementById('bulanFilter').value=ym; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 function simpan(){
@@ -259,34 +269,35 @@ function formatAngkaSheet(ws, colIndex){
     if(ws[cellRef] && typeof ws[cellRef].v==='number') ws[cellRef].z='#,##0';
   }
 }
-// SHEET KATEGORI - BAWAHNYA PEMASUKAN - PENGELUARAN = SISA SALDO (Cash+Non Cash)
+// SHEET KATEGORI - SUDAH ADA TANGGAL, BAWAHNYA SISA SALDO
 function buatSheetKategori(arr, judul){
   let g=grupKategori(arr);
   let h=hitung(arr);
   let rows=[
     ['DETAIL PER KATEGORI - '+judul],[''],
-    ['Bulan','Kategori','Jenis','Total Nominal (Rp)','Cash (Rp)','Non Cash (Rp)','Daftar Keterangan']
+    ['Tanggal','Bulan','Kategori','Jenis','Total Nominal (Rp)','Cash (Rp)','Non Cash (Rp)','Daftar Keterangan']
   ];
   g.forEach(x=>{
-    rows.push([judul, x.kategori, x.jenis, x.total, x.metodes['Cash']||0, x.metodes['Non Cash']||0, x.kets.join(' | ')]);
+    let tglTxt = x.tanggalList.map(fmtTgl).join(', ');
+    rows.push([tglTxt, judul, x.kategori, x.jenis, x.total, x.metodes['Cash']||0, x.metodes['Non Cash']||0, x.kets.join(' | ')]);
   });
   rows.push(['']);
-  rows.push(['TOTAL PEMASUKAN','','', h.totalIn, h.ic, h.inn, '']);
-  rows.push(['TOTAL PENGELUARAN','','', h.totalOut, h.oc, h.on, '']);
+  rows.push(['','TOTAL PEMASUKAN','','', h.totalIn, h.ic, h.inn, '']);
+  rows.push(['','TOTAL PENGELUARAN','','', h.totalOut, h.oc, h.on, '']);
   rows.push(['']);
-  rows.push(['SISA SALDO (Cash + Non Cash)','','', h.saldo, h.saldoCash, h.saldoNon, 'Pemasukan - Pengeluaran']);
-  rows.push(['Sisa Saldo Cash','','', h.saldoCash, h.saldoCash, '', '']);
-  rows.push(['Sisa Saldo Non Cash','','', h.saldoNon, '', h.saldoNon, '']);
+  rows.push(['','SISA SALDO (Cash + Non Cash)','','', h.saldo, h.saldoCash, h.saldoNon, 'Pemasukan - Pengeluaran']);
+  rows.push(['','Sisa Saldo Cash','','', h.saldoCash, h.saldoCash, '', '']);
+  rows.push(['','Sisa Saldo Non Cash','','', h.saldoNon, '', h.saldoNon, '']);
   let ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:22},{wch:18},{wch:12},{wch:18},{wch:15},{wch:18},{wch:60}];
-  formatAngkaSheet(ws,3); formatAngkaSheet(ws,4); formatAngkaSheet(ws,5);
+  ws['!cols']=[{wch:22},{wch:18},{wch:18},{wch:12},{wch:18},{wch:15},{wch:18},{wch:60}];
+  formatAngkaSheet(ws,4); formatAngkaSheet(ws,5); formatAngkaSheet(ws,6);
   return ws;
 }
 function buatSheetDetailTransaksi(arr){
   let rows=[['Tanggal','Bulan','Jenis','Metode','Detail Non Cash','Kategori','Keterangan','Nominal (Rp)']];
   let h=hitung(arr);
   [...arr].sort((a,b)=>a.tanggal.localeCompare(b.tanggal)).forEach(t=>{
-    rows.push([t.tanggal, namaBulan(t.tanggal.slice(0,7)), t.jenis, t.metode, t.detail||'', t.kategori, t.ket||'', t.nominal]);
+    rows.push([fmtTgl(t.tanggal), namaBulan(t.tanggal.slice(0,7)), t.jenis, t.metode, t.detail||'', t.kategori, t.ket||'', t.nominal]);
   });
   rows.push(['']);
   rows.push(['TOTAL PEMASUKAN','','','','','','', h.totalIn]);
@@ -295,7 +306,7 @@ function buatSheetDetailTransaksi(arr){
   rows.push(['Sisa Saldo Cash','','','','','','', h.saldoCash]);
   rows.push(['Sisa Saldo Non Cash','','','','','','', h.saldoNon]);
   let ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:18},{wch:15},{wch:12},{wch:12},{wch:20},{wch:18},{wch:35},{wch:20}];
+  ws['!cols']=[{wch:14},{wch:15},{wch:12},{wch:12},{wch:20},{wch:18},{wch:35},{wch:20}];
   formatAngkaSheet(ws,7);
   return ws;
 }
@@ -323,7 +334,7 @@ function exportExcelBaru(){
     XLSX.utils.book_append_sheet(wb, buatSheetKategori(f, judul), "Detail Per Kategori");
     XLSX.utils.book_append_sheet(wb, buatSheetDetailTransaksi(f), "Detail Transaksi");
     XLSX.writeFile(wb, file);
-    alert('Berhasil! Di bawah sudah ada SISA SALDO = Pemasukan - Pengeluaran.');
+    alert('Berhasil! Sekarang sudah ada kolom Tanggal.');
     return;
   }
 
@@ -343,22 +354,22 @@ function exportExcelBaru(){
     for(let c=1;c<=9;c++) formatAngkaSheet(wsRekap,c);
     XLSX.utils.book_append_sheet(wb, wsRekap, "Rekap Semua Bulan");
 
-    // Sheet Kategori Gabungan - Bawahnya Sisa Saldo
-    let rowsKat=[['DETAIL PER KATEGORI - SEMUA BULAN'],[''],['Bulan','Kategori','Jenis','Total Nominal (Rp)','Cash (Rp)','Non Cash (Rp)','Daftar Keterangan']];
+    let rowsKat=[['DETAIL PER KATEGORI - SEMUA BULAN'],[''],['Tanggal','Bulan','Kategori','Jenis','Total Nominal (Rp)','Cash (Rp)','Non Cash (Rp)','Daftar Keterangan']];
     Object.keys(perBulan).sort().forEach(ym=>{
       let g=grupKategori(perBulan[ym]);
       g.forEach(x=>{
-        rowsKat.push([namaBulan(ym), x.kategori, x.jenis, x.total, x.metodes['Cash']||0, x.metodes['Non Cash']||0, x.kets.join(' | ')]);
+        let tglTxt = x.tanggalList.map(fmtTgl).join(', ');
+        rowsKat.push([tglTxt, namaBulan(ym), x.kategori, x.jenis, x.total, x.metodes['Cash']||0, x.metodes['Non Cash']||0, x.kets.join(' | ')]);
       });
     });
     rowsKat.push(['']);
-    rowsKat.push(['TOTAL PEMASUKAN SEMUA BULAN','','', hAll.totalIn, hAll.ic, hAll.inn, '']);
-    rowsKat.push(['TOTAL PENGELUARAN SEMUA BULAN','','', hAll.totalOut, hAll.oc, hAll.on, '']);
+    rowsKat.push(['','TOTAL PEMASUKAN SEMUA BULAN','','', hAll.totalIn, hAll.ic, hAll.inn, '']);
+    rowsKat.push(['','TOTAL PENGELUARAN SEMUA BULAN','','', hAll.totalOut, hAll.oc, hAll.on, '']);
     rowsKat.push(['']);
-    rowsKat.push(['SISA SALDO (Cash + Non Cash)','','', hAll.saldo, hAll.saldoCash, hAll.saldoNon, 'Pemasukan - Pengeluaran']);
+    rowsKat.push(['','SISA SALDO (Cash + Non Cash)','','', hAll.saldo, hAll.saldoCash, hAll.saldoNon, 'Pemasukan - Pengeluaran']);
     let wsKat=XLSX.utils.aoa_to_sheet(rowsKat);
-    wsKat['!cols']=[{wch:22},{wch:18},{wch:12},{wch:18},{wch:15},{wch:18},{wch:60}];
-    formatAngkaSheet(wsKat,3); formatAngkaSheet(wsKat,4); formatAngkaSheet(wsKat,5);
+    wsKat['!cols']=[{wch:22},{wch:18},{wch:18},{wch:12},{wch:18},{wch:15},{wch:18},{wch:60}];
+    formatAngkaSheet(wsKat,4); formatAngkaSheet(wsKat,5); formatAngkaSheet(wsKat,6);
     XLSX.utils.book_append_sheet(wb, wsKat, "Detail Per Kategori");
 
     Object.keys(perBulan).sort().forEach(ym=>{
@@ -369,26 +380,26 @@ function exportExcelBaru(){
         ['Pemasukan Cash', h.ic],['Pemasukan Non Cash', h.inn],['Total Pemasukan (Cash + Non Cash)', h.totalIn],[''],
         ['Pengeluaran Cash', h.oc],['Pengeluaran Non Cash', h.on],['Total Pengeluaran (Cash + Non Cash)', h.totalOut],[''],
         ['SISA SALDO (Cash + Non Cash)', h.saldo],['Sisa Saldo Cash', h.saldoCash],['Sisa Saldo Non Cash', h.saldoNon],[''],
-        ['RINCIAN PER KATEGORI'],['Kategori','Jenis','Total (Rp)','Keterangan'],
+        ['RINCIAN PER KATEGORI'],['Tanggal','Kategori','Jenis','Total (Rp)','Keterangan'],
       ];
-      grupKategori(arr).forEach(x=>{ rows.push([x.kategori, x.jenis, x.total, x.kets.join(' | ')]); });
+      grupKategori(arr).forEach(x=>{ let tglTxt=x.tanggalList.map(fmtTgl).join(', '); rows.push([tglTxt, x.kategori, x.jenis, x.total, x.kets.join(' | ')]); });
       rows.push(['']);
       rows.push(['TOTAL PEMASUKAN','',h.totalIn,'']);
       rows.push(['TOTAL PENGELUARAN','',h.totalOut,'']);
       rows.push(['SISA SALDO (Cash + Non Cash)','',h.saldo,'']);
       rows.push([''],['DETAIL TRANSAKSI'],['Tanggal','Jenis','Metode','Detail Non Cash','Kategori','Keterangan','Nominal (Rp)']);
-      arr.forEach(t=>{ rows.push([t.tanggal, t.jenis, t.metode, t.detail||'', t.kategori, t.ket||'', t.nominal]); });
+      arr.forEach(t=>{ rows.push([fmtTgl(t.tanggal), t.jenis, t.metode, t.detail||'', t.kategori, t.ket||'', t.nominal]); });
       rows.push(['']);
       rows.push(['TOTAL PEMASUKAN','','','','','', h.totalIn]);
       rows.push(['TOTAL PENGELUARAN','','','','','', h.totalOut]);
       rows.push(['SISA SALDO (Cash + Non Cash)','','','','','', h.saldo]);
       let ws=XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols']=[{wch:28},{wch:12},{wch:18},{wch:20},{wch:18},{wch:35},{wch:18}];
+      ws['!cols']=[{wch:22},{wch:18},{wch:12},{wch:18},{wch:35},{wch:20},{wch:18}];
       let namaSheet = namaBulan(ym).replace('Januari','Jan').replace('Februari','Feb').replace('September','Sep').replace('Oktober','Okt').replace('November','Nov').replace('Desember','Des');
       XLSX.utils.book_append_sheet(wb, ws, namaSheet);
     });
     XLSX.writeFile(wb, "Laporan_Keuangan_Semua_Bulan_Lengkap.xlsx");
-    alert('Berhasil! Bawahnya sudah SISA SALDO = Pemasukan - Pengeluaran.');
+    alert('Berhasil! Sekarang sudah ada kolom Tanggal di semua sheet.');
     return;
   }
 

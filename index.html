@@ -3,190 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catatan Keuangan</title>
+<title>Keuangan Cash & Non Cash</title>
 <style>
-  *{box-sizing:border-box;font-family:system-ui,Arial}
-  body{background:#ffffff;color:#111;margin:0;padding:16px}
-  .card{background:#ffffff;border:1px solid #e5e5e5;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
-  input,select{width:100%;background:#f2f2f2;color:#111;border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:10px;font-size:16px;outline:none}
-  input:focus,select:focus{border-color:#1a3eff;background:#fff}
-  button{width:100%;border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px}
-  .btn-simpan{background:#1a3eff;color:#fff}
-  .btn-excel{background:#1e7e34;color:#fff}
-  .btn-json{background:#eee;color:#111}
-  .btn-kecil{width:auto;padding:6px 10px;font-size:12px;margin:0;background:#eee;color:#111}
-  .in{color:#1e7e34}.out{color:#d32f2f}.sisa{color:#1565c0}
-  .item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
-  .item small{color:#777}
-  .badge{padding:3px 8px;border-radius:20px;font-size:12px;color:#fff}
-  .badge-in{background:#1e7e34}.badge-out{background:#d32f2f}
-  .hapus{background:#eee;width:auto;padding:5px 10px;font-size:12px;margin:0;color:#111}
-  table{width:100%;border-collapse:collapse;font-size:13px;color:#111}
-  th,td{padding:10px 6px;border-bottom:1px solid #eee;text-align:left}
-  th{color:#777;font-size:12px}
-  tr.aktif{background:#eaf2ff}
-  .top3{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
-  .top3 .card{margin:0}
-  .top3 small{color:#777}.top3 b{font-size:22px}
-  label{color:#555}
+  *{box-sizing:border-box;font-family:sans-serif}
+  body{background:#111;color:#fff;margin:0;padding:16px}
+  .card{background:#1e1e1e;border:1px solid #333;border-radius:16px;padding:14px;margin-bottom:12px}
+  .label{color:#aaa;font-size:13px}
+  .green{color:#4ade80;font-size:22px;font-weight:bold}
+  .red{color:#f87171;font-size:22px;font-weight:bold}
+  .blue{color:#60a5fa;font-size:22px;font-weight:bold}
+  .row{display:flex;gap:12px}.row .card{flex:1}
+  .small{font-size:11px;color:#888}
+  input,select{width:100%;background:#2a2a2a;border:1px solid #444;color:#fff;padding:12px;border-radius:12px;margin-bottom:10px;font-size:16px;outline:none}
+  button{width:100%;background:#1d4ed8;color:#fff;border:none;padding:14px;border-radius:12px;font-size:16px;font-weight:bold}
+  .item{background:#1e1e1e;border:1px solid #333;padding:10px;border-radius:12px;margin-bottom:8px;display:flex;justify-content:space-between}
+  .badge{font-size:11px;padding:3px 8px;border-radius:20px}
+  .cash{background:#14532d;color:#86efac}
+  .noncash{background:#1e3a8a;color:#93c5fd}
+  .hapus{background:#dc2626;padding:5px 10px;border-radius:8px;font-size:12px;width:auto;border:none;color:#fff}
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h2 style="margin:0">💰 Catatan Keuangan</h2>
-  <p style="color:#777;margin:6px 0 0">Pencatatan pemasukan & pengeluaran sederhana</p>
+<h2>Keuangan - November 2026</h2>
+
+<!-- PEMASUKAN DIBAGI 2 -->
+<div class="row">
+  <div class="card"><div class="label">Pemasukan - Cash</div><div class="green" id="inCash">Rp 0</div><div class="small">Tunai di dompet</div></div>
+  <div class="card"><div class="label">Pemasukan - Non Cash</div><div class="green" id="inNon">Rp 0</div><div class="small">Transfer / QRIS / E-Wallet</div></div>
 </div>
 
-<div class="card">
-  <label style="font-size:13px">📅 Lihat Laporan Bulan:</label>
-  <select id="filterBulan"></select>
-  <div id="infoBulan" style="text-align:center;color:#d97706;font-size:13px"></div>
+<!-- PENGELUARAN DIBAGI 2 -->
+<div class="row">
+  <div class="card"><div class="label">Pengeluaran - Cash</div><div class="red" id="outCash">Rp 0</div></div>
+  <div class="card"><div class="label">Pengeluaran - Non Cash</div><div class="red" id="outNon">Rp 0</div></div>
 </div>
 
-<div class="top3">
-  <div class="card"><small>Pemasukan <span id="labelMasuk"></span></small><br><b class="in" id="totalMasuk">Rp 0</b></div>
-  <div class="card"><small>Pengeluaran <span id="labelKeluar"></span></small><br><b class="out" id="totalKeluar">Rp 0</b></div>
-  <div class="card"><small>Saldo / Sisa Uang <span id="labelSisa"></span></small><br><b class="sisa" id="sisaUang">Rp 0</b></div>
-</div>
-
+<!-- TOTAL & SALDO -->
 <div class="card">
-  <h3 style="margin:0 0 12px">Tambah Transaksi</h3>
+  <div class="label">Total Pemasukan November 2026</div><div class="green" id="inTotal">Rp 0</div>
+  <div class="label" style="margin-top:8px">Total Pengeluaran November 2026</div><div class="red" id="outTotal">Rp 0</div>
+</div>
+<div class="row">
+  <div class="card"><div class="label">Saldo Cash</div><div class="blue" id="saldoCash">Rp 0</div></div>
+  <div class="card"><div class="label">Saldo Non Cash</div><div class="blue" id="saldoNon">Rp 0</div></div>
+</div>
+<div class="card"><div class="label">Saldo / Sisa Uang - November 2026</div><div class="blue" id="saldoTotal">Rp 0</div></div>
+
+<!-- FORM -->
+<div class="card">
+  <h3>Tambah Transaksi</h3>
   <select id="jenis"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
+  
+  <label class="small">Metode Pembayaran:</label>
+  <select id="metode" onchange="cekNonCash()">
+    <option value="Cash">Cash / Tunai</option>
+    <option value="Non Cash">Non Cash</option>
+  </select>
+
+  <div id="detailNonCash" style="display:none">
+    <select id="detail">
+      <option>Transfer Bank</option>
+      <option>QRIS</option>
+      <option>E-Wallet (DANA / GoPay / OVO)</option>
+      <option>Kartu Debit / Kredit</option>
+    </select>
+  </div>
+
   <input type="date" id="tanggal" value="2026-11-07">
-  <!-- NOMINAL - TETAP AUTO TITIK, TAPI TANPA PREVIEW & TANPA TOMBOL CEPAT -->
-  <label style="font-size:13px">Nominal (Rp):</label>
-  <input type="text" id="nominal" inputmode="numeric" placeholder="Contoh: 500.000" autocomplete="off">
+  <input type="number" id="nominal" placeholder="Nominal (Rp): Contoh: 500000">
   <input type="text" id="kategori" placeholder="Kategori, contoh: Makan">
-  <input type="text" id="keterangan" placeholder="Keterangan">
-  <button class="btn-simpan" onclick="simpan()">+ Simpan Transaksi</button>
+  <input type="text" id="ket" placeholder="Keterangan">
+  <button onclick="simpan()">+ Simpan Transaksi</button>
 </div>
 
-<div class="card">
-  <h3 style="margin:0 0 6px">📊 Laporan Per Bulan</h3>
-  <p style="color:#777;font-size:13px;margin:0 0 10px">Tiap bulan dipisah, jangan digabung.</p>
-  <div id="laporanBulan"></div>
-</div>
-
-<div class="card">
-  <input type="text" id="cari" placeholder="🔍 Cari transaksi..." oninput="tampil()">
-  <select id="filterJenis" onchange="tampil()"><option value="Semua">Semua</option><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
-  <button class="btn-excel" onclick="downloadExcelBulan()">⬇️ Download Excel Bulan Ini</button>
-  <button class="btn-excel" style="background:#eee;color:#111" onclick="downloadExcelSemua()">⬇️ Download Excel Semua Bulan</button>
-  <button class="btn-json" onclick="backupJSON()">Backup JSON</button>
-</div>
-
-<div class="card">
-  <h3>Riwayat Transaksi - <span id="judulRiwayat"></span></h3>
-  <div id="list"><p style="text-align:center;color:#888">Belum ada transaksi.</p></div>
-</div>
+<h3>Riwayat Transaksi</h3>
+<div id="list"></div>
 
 <script>
-let data = JSON.parse(localStorage.getItem('keuangan')||'[]');
-let bulanDipilih = '2026-11';
-function rupiah(n){return 'Rp '+Number(n).toLocaleString('id-ID')}
-function angkaDariInput(str){ return Number(String(str||'').replace(/[^0-9]/g,'')) || 0; }
-function formatInput(){
-  let el=document.getElementById('nominal');
-  let angka=angkaDariInput(el.value);
-  if(!angka){ el.value=''; return; }
-  el.value=angka.toLocaleString('id-ID'); // 500000 -> 500.000, tetap auto titik
-}
-document.getElementById('nominal').addEventListener('input', formatInput);
-
-function bulanKey(tgl){return tgl.slice(0,7)}
-function namaBulan(key){
-  const [y,m]=key.split('-');
-  const nama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  return nama[Number(m)-1]+' '+y;
-}
-function isiFilterBulan(){
-  const sel=document.getElementById('filterBulan');
-  const keys=[...new Set(data.map(d=>bulanKey(d.tanggal)))].sort().reverse();
-  if(!keys.includes('2026-11')) keys.unshift('2026-11');
-  if(!keys.includes(bulanDipilih) && keys.length) bulanDipilih=keys[0];
-  sel.innerHTML='';
-  keys.forEach(k=>{let o=document.createElement('option');o.value=k;o.textContent=namaBulan(k);if(k===bulanDipilih)o.selected=true;sel.appendChild(o)});
-  sel.value=bulanDipilih;
-  sel.onchange=()=>{bulanDipilih=sel.value; tampil();}
+let data = JSON.parse(localStorage.getItem('keuangan_cash_noncash') || '[]');
+function fmt(n){ return 'Rp ' + n.toLocaleString('id-ID'); }
+function cekNonCash(){ document.getElementById('detailNonCash').style.display = document.getElementById('metode').value=='Non Cash' ? 'block' : 'none'; }
+function render(){
+  let ic=0, inn=0, oc=0, on=0;
+  data.forEach(t=>{
+    if(t.jenis=='Pemasukan' && t.metode=='Cash') ic+=t.nominal;
+    if(t.jenis=='Pemasukan' && t.metode=='Non Cash') inn+=t.nominal;
+    if(t.jenis=='Pengeluaran' && t.metode=='Cash') oc+=t.nominal;
+    if(t.jenis=='Pengeluaran' && t.metode=='Non Cash') on+=t.nominal;
+  });
+  document.getElementById('inCash').innerText=fmt(ic);
+  document.getElementById('inNon').innerText=fmt(inn);
+  document.getElementById('outCash').innerText=fmt(oc);
+  document.getElementById('outNon').innerText=fmt(on);
+  document.getElementById('inTotal').innerText=fmt(ic+inn);
+  document.getElementById('outTotal').innerText=fmt(oc+on);
+  document.getElementById('saldoCash').innerText=fmt(ic-oc);
+  document.getElementById('saldoNon').innerText=fmt(inn-on);
+  document.getElementById('saldoTotal').innerText=fmt((ic+inn)-(oc+on));
+  let html='';
+  data.slice().reverse().forEach((t,i)=>{
+    let idx=data.length-1-i;
+    let warna=t.jenis=='Pemasukan'?'#4ade80':'#f87171';
+    let tanda=t.jenis=='Pemasukan'?'+':'-';
+    html+=`<div class="item"><div><b>${t.kategori}</b> <span class="badge ${t.metode=='Cash'?'cash':'noncash'}">${t.metode} ${t.detail?'- '+t.detail:''}</span><br><span class="small">${t.tanggal} - ${t.ket} - ${t.jenis}</span></div><div style="text-align:right"><b style="color:${warna}">${tanda} ${fmt(t.nominal)}</b><br><button class="hapus" onclick="hapus(${idx})">Hapus</button></div></div>`;
+  });
+  document.getElementById('list').innerHTML=html||'<p style="color:#888">Belum ada transaksi</p>';
 }
 function simpan(){
-  const tanggal=document.getElementById('tanggal').value;
-  const jenis=document.getElementById('jenis').value;
-  const nominal=angkaDariInput(document.getElementById('nominal').value);
-  const kategori=document.getElementById('kategori').value||'-';
-  const keterangan=document.getElementById('keterangan').value||'';
-  if(!tanggal||!nominal) return alert('Isi tanggal & nominal dulu Ayah');
-  if(!confirm('Simpan '+jenis+' sebesar '+rupiah(nominal)+' ?')) return;
-  data.unshift({tanggal,jenis,nominal,kategori,keterangan});
-  localStorage.setItem('keuangan',JSON.stringify(data));
-  bulanDipilih=bulanKey(tanggal);
-  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('keterangan').value='';
-  tampil();
+  let jenis=document.getElementById('jenis').value;
+  let metode=document.getElementById('metode').value;
+  let detail=metode=='Non Cash'?document.getElementById('detail').value:'';
+  let tanggal=document.getElementById('tanggal').value;
+  let nominal=parseInt(document.getElementById('nominal').value);
+  let kategori=document.getElementById('kategori').value||'Lainnya';
+  let ket=document.getElementById('ket').value||'';
+  if(!nominal){alert('Isi nominal dulu Ayah!');return;}
+  data.push({jenis,metode,detail,tanggal,nominal,kategori,ket});
+  localStorage.setItem('keuangan_cash_noncash',JSON.stringify(data));
+  document.getElementById('nominal').value='';document.getElementById('kategori').value='';document.getElementById('ket').value='';
+  render();
 }
-function hapus(i){ if(confirm('Hapus transaksi ini?')){ data.splice(i,1); localStorage.setItem('keuangan',JSON.stringify(data)); tampil(); } }
-function pilihBulan(k){ bulanDipilih=k; tampil(); window.scrollTo({top:0,behavior:'smooth'}); }
-function tampil(){
-  isiFilterBulan();
-  const cari=document.getElementById('cari').value.toLowerCase();
-  const fJenis=document.getElementById('filterJenis').value;
-  const fBulan=bulanDipilih;
-  let dataBulan = data.filter(d=>bulanKey(d.tanggal)===fBulan);
-  let masuk = dataBulan.filter(d=>d.jenis==='Pemasukan').reduce((s,d)=>s+d.nominal,0);
-  let keluar = dataBulan.filter(d=>d.jenis==='Pengeluaran').reduce((s,d)=>s+d.nominal,0);
-  let sisa = masuk - keluar;
-  document.getElementById('totalMasuk').textContent=rupiah(masuk);
-  document.getElementById('totalKeluar').textContent=rupiah(keluar);
-  document.getElementById('sisaUang').textContent=rupiah(sisa);
-  document.getElementById('labelMasuk').textContent='- '+namaBulan(fBulan);
-  document.getElementById('labelKeluar').textContent='- '+namaBulan(fBulan);
-  document.getElementById('labelSisa').textContent='- '+namaBulan(fBulan);
-  document.getElementById('infoBulan').textContent=`Menampilkan ${namaBulan(fBulan)} • ${dataBulan.length} transaksi`;
-  document.getElementById('judulRiwayat').textContent=namaBulan(fBulan);
-  let keys=[...new Set(data.map(d=>bulanKey(d.tanggal)))].sort().reverse();
-  let lap=document.getElementById('laporanBulan');
-  if(!keys.length){ lap.innerHTML='<p style="color:#888;text-align:center">Belum ada data.</p>'; }
-  else{
-    lap.innerHTML='<table><tr><th>Bulan</th><th>Pemasukan</th><th>Pengeluaran</th><th>Sisa</th><th></th></tr>'+
-    keys.map(k=>{
-      let db=data.filter(d=>bulanKey(d.tanggal)===k);
-      let m=db.filter(d=>d.jenis==='Pemasukan').reduce((s,d)=>s+d.nominal,0);
-      let ke=db.filter(d=>d.jenis==='Pengeluaran').reduce((s,d)=>s+d.nominal,0);
-      return `<tr class="${k===fBulan?'aktif':''}"><td><b>${namaBulan(k)}</b><br><small>${db.length} transaksi</small></td><td class="in">${rupiah(m)}</td><td class="out">${rupiah(ke)}</td><td class="sisa">${rupiah(m-ke)}</td><td><button class="btn-kecil" onclick="pilihBulan('${k}')">Lihat</button></td></tr>`;
-    }).join('')+'</table>';
-  }
-  let filtered=data.map((d,i)=>({...d,idx:i})).filter(d=>{
-    if(bulanKey(d.tanggal)!==fBulan) return false;
-    if(fJenis!=='Semua' && d.jenis!==fJenis) return false;
-    if(cari && !(d.kategori+d.keterangan+d.jenis).toLowerCase().includes(cari)) return false;
-    return true;
-  });
-  let list=document.getElementById('list');
-  if(!filtered.length){ list.innerHTML='<p style="text-align:center;color:#888">Belum ada transaksi di '+namaBulan(fBulan)+'.</p>'; return; }
-  list.innerHTML=filtered.map(d=>`
-    <div class="item"><div><b>${d.kategori}</b><br><small>${d.tanggal} • ${d.keterangan}</small></div>
-    <div style="text-align:right"><span class="badge ${d.jenis==='Pemasukan'?'badge-in':'badge-out'}">${d.jenis}</span><br><b class="${d.jenis==='Pemasukan'?'in':'out'}">${d.jenis==='Pemasukan'?'+':'-'}${rupiah(d.nominal)}</b><br><button class="hapus" onclick="hapus(${d.idx})">Hapus</button></div></div>`).join('');
-}
-function downloadExcelBulan(){
-  let rows=[['Tanggal','Jenis','Kategori','Keterangan','Nominal']];
-  data.filter(d=>bulanKey(d.tanggal)===bulanDipilih).forEach(d=>rows.push([d.tanggal,d.jenis,d.kategori,d.keterangan,d.nominal]));
-  let db=data.filter(d=>bulanKey(d.tanggal)===bulanDipilih);
-  let m=db.filter(d=>d.jenis==='Pemasukan').reduce((s,d)=>s+d.nominal,0);
-  let ke=db.filter(d=>d.jenis==='Pengeluaran').reduce((s,d)=>s+d.nominal,0);
-  rows.push([]); rows.push(['LAPORAN',namaBulan(bulanDipilih)]); rows.push(['Total Pemasukan',m]); rows.push(['Total Pengeluaran',ke]); rows.push(['Sisa',m-ke]);
-  let csv=rows.map(r=>r.join(';')).join('\n');
-  let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='laporan-'+bulanDipilih+'.csv'; a.click();
-}
-function downloadExcelSemua(){
-  let rows=[['Tanggal','Jenis','Kategori','Keterangan','Nominal']];
-  data.forEach(d=>rows.push([d.tanggal,d.jenis,d.kategori,d.keterangan,d.nominal]));
-  let csv=rows.map(r=>r.join(';')).join('\n');
-  let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='keuangan-semua.csv'; a.click();
-}
-function backupJSON(){
-  let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})); a.download='backup-keuangan.json'; a.click();
-}
-tampil();
+function hapus(i){ if(confirm('Hapus?')){data.splice(i,1);localStorage.setItem('keuangan_cash_noncash',JSON.stringify(data));render();} }
+render();
 </script>
 </body>
 </html>
